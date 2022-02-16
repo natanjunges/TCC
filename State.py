@@ -1,6 +1,8 @@
 from enum import Enum, auto
 
 class State(Enum):
+    Start = auto()
+
     TransmitReferent = auto()
     RequestReferentConfirmation1 = auto()
     RequestReferentConfirmation2 = auto()

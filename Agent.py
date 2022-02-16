@@ -1,23 +1,36 @@
-from multiprocessing import Value, Process, Pipe
+from State import State
+from multiprocessing import Value, Process, Pipe, Barrier
 from ctypes import c_bool
+import logging
+import sys
 
 class Agent:
-    def __init__(self, objects):
+    def __init__(self, objects, kb= None):
         self.objects = objects
+        self.kb = kb if kb != None else set()
         self.running = Value(c_bool, False)
         self.process = Process(target= self.run)
+        self.state = State.Start
+        self.logger = logging.getLogger("{}.{}".format(self.__class__.__name__, id(self)))
+        self.logger.addHandler(logging.StreamHandler(sys.stdout))
+        self.logger.setLevel(logging.INFO)
 
     def connect(self, agent):
         self_conn, agent_conn = Pipe()
         self.conn = self_conn
-        agent.accept(agent_conn)
+        self.barrier = Barrier(2)
+        agent.accept(agent_conn, self.barrier)
 
-    def accept(self, conn):
+    def accept(self, conn, barrier):
         self.conn = conn
+        self.barrier = barrier
 
     def start(self):
         self.running.value = True
         self.process.start()
+
+    def join(self):
+        self.process.join()
 
     def stop(self):
         self.running.value = False
@@ -25,15 +38,15 @@ class Agent:
 
     def send(self, msg):
         self.conn.send(msg)
-
-    def poll(self):
-        return self.conn.poll()
+        self.logger.debug("{}#{} sent: {}".format(self.__class__.__name__, self.process.pid, msg))
 
     def wait(self):
-        self.conn.poll(None)
+        self.barrier.wait()
 
     def recv(self):
-        return self.conn.recv()
+        msg = self.conn.recv()
+        self.logger.debug("{}#{} received: {}".format(self.__class__.__name__, self.process.pid, msg))
+        return msg
 
     def run(self):
         pass
