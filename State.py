@@ -42,3 +42,6 @@ class State(Enum):
     RIC2 = RequestInductionConfirmation2
     CI1 = ConfirmInduction1
     CI2 = ConfirmInduction2
+
+    FirstInteraction = TransmitReferent
+    SecondInteraction = TransmitInducedReferent

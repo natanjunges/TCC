@@ -3,8 +3,8 @@ from State import State
 import random
 
 class HumanAgent(Agent):
-    def __init__(self, objects):
-        super().__init__()
+    def __init__(self, seed, interaction, objects):
+        super().__init__(seed, interaction)
         self.objects = objects
 
     def connect(self, agent):
@@ -12,7 +12,10 @@ class HumanAgent(Agent):
         self.robot_state = agent.state
 
     def run(self):
-        self.state = State.TIR
+        random.seed(self.seed)
+        self.logger.info("{}#{} seed: {}".format(self.__class__.__name__, self.process.pid, self.seed))
+        self.logger.debug("{}#{} state: {}".format(self.__class__.__name__, self.process.pid, self.state))
+        self.state = self.interaction
         self.logger.debug("{}#{} state: {}".format(self.__class__.__name__, self.process.pid, self.state))
         self.object_index = None
         self.word_1 = None

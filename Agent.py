@@ -5,7 +5,9 @@ import logging
 import sys
 
 class Agent:
-    def __init__(self):
+    def __init__(self, seed, interaction):
+        self.seed = seed
+        self.interaction = interaction
         self.running = Value(c_bool, False)
         self.process = Process(target= self.run)
         self.state = State.Start

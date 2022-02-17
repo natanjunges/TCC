@@ -2,16 +2,28 @@ from Agent import Agent
 from State import State
 import random
 from multiprocessing import Value
+import os.path
+import json
 
 class RobotAgent(Agent):
-    def __init__(self, n_objects, kb= None):
-        super().__init__()
+    def __init__(self, seed, interaction, n_objects, kb_file= None):
+        super().__init__(seed, interaction)
         self.n_objects = n_objects
-        self.kb = kb if kb != None else set()
+        self.kb_file = kb_file
+
+        if kb_file != None and os.path.isfile(kb_file):
+            with open(kb_file, "r") as file:
+                self.kb = {(object_index, word) for object_index, word in json.load(file)}
+        else:
+            self.kb = set()
+
         self.state = Value("i", State.Start.value)
 
     def run(self):
-        self.state.value = State.TIR.value
+        random.seed(self.seed)
+        self.logger.info("{}#{} seed: {}".format(self.__class__.__name__, self.process.pid, self.seed))
+        self.logger.debug("{}#{} state: {}".format(self.__class__.__name__, self.process.pid, State(self.state.value)))
+        self.state.value = self.interaction.value
         self.logger.debug("{}#{} state: {}".format(self.__class__.__name__, self.process.pid, State(self.state.value)))
         self.object_index_1 = None
         self.object_index_2 = None
@@ -75,9 +87,9 @@ class RobotAgent(Agent):
                     self.state.value = State.RIC2.value
                 elif state == State.RIC2.value:
                     #self.state.value = State.RWC1.value
-                    #self.recv()
-                    #self.state.value = State.CI2.value
-                    self.state.value = State.End.value
+                    self.recv()
+                    self.state.value = State.CI2.value
+                    #self.state.value = State.End.value
 
             self.logger.debug("{}#{} state: {}".format(self.__class__.__name__, self.process.pid, State(self.state.value)))
             self.wait()
@@ -110,6 +122,11 @@ class RobotAgent(Agent):
     def CW2(self):
         self.kb.add((self.object_index_1, self.word))
         self.logger.debug("{}#{} kb: {}".format(self.__class__.__name__, self.process.pid, self.kb))
+
+        if self.kb_file != None:
+            with open(self.kb_file, "w") as file:
+                json.dump(sorted(self.kb), file)
+
         self.object_index_1 = None
         self.object_index_2 = None
         self.word = None
@@ -136,13 +153,18 @@ class RobotAgent(Agent):
 
     def RIC1(self):
         if self.word == None:
-            self.word = random.choice(list({word for _, word in self.kb}))
+            self.word = random.choice(sorted({word for _, word in self.kb}))
 
         self.send("{}?".format(self.word))
 
     def CI2(self):
         self.kb.add((self.object_index_1, self.word))
         self.logger.debug("{}#{} kb: {}".format(self.__class__.__name__, self.process.pid, self.kb))
+
+        if self.kb_file != None:
+            with open(self.kb_file, "w") as file:
+                json.dump(sorted(self.kb), file)
+
         self.object_index_1 = None
         self.object_index_2 = None
         self.word = None

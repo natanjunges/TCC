@@ -2,13 +2,21 @@
 
 from RobotAgent import RobotAgent
 from HumanAgent import HumanAgent
+from State import State
 import random
+import sys
+import json
 
 if __name__ == "__main__":
-    objects = [["foo", "Foo", "f00", "goo", "boo"], ["bar", "Bar", "b4r", "boo", "coo"], ["lol", "Lol", "l0l", "coo", "doo"], ["biz", "Biz", "b1z", "doo", "goo"]]
-    random.seed()
-    robot = RobotAgent(len(objects), {(0, "goo"), (1, "boo"), (2, "coo"), (3, "doo")})
-    human = HumanAgent(objects)
+    with open("objects.json", "r") as file:
+        objects = json.load(file)
+
+    seed = 0
+    #seed = random.randrange(sys.maxsize)
+    #interaction = State.FirstInteraction
+    interaction = State.SecondInteraction
+    robot = RobotAgent(seed, interaction, len(objects), "robot1_kb.json")
+    human = HumanAgent(seed, interaction, objects)
     human.connect(robot)
     robot.start()
     human.start()
