@@ -5,9 +5,7 @@ import logging
 import sys
 
 class Agent:
-    def __init__(self, objects, kb= None):
-        self.objects = objects
-        self.kb = kb if kb != None else set()
+    def __init__(self):
         self.running = Value(c_bool, False)
         self.process = Process(target= self.run)
         self.state = State.Start
@@ -38,7 +36,7 @@ class Agent:
 
     def send(self, msg):
         self.conn.send(msg)
-        self.logger.debug("{}#{} sent: {}".format(self.__class__.__name__, self.process.pid, msg))
+        self.logger.info("{}#{} sent: {}".format(self.__class__.__name__, self.process.pid, msg))
 
     def wait(self):
         self.barrier.wait()
