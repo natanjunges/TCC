@@ -5,9 +5,10 @@ import logging
 import sys
 
 class Agent:
-    def __init__(self, seed, interaction):
+    def __init__(self, seed, interaction, noise):
         self.seed = seed
         self.interaction = interaction
+        self.noise = noise
         self.running = Value(c_bool, False)
         self.process = Process(target= self.run)
         self.state = State.Start
@@ -42,6 +43,9 @@ class Agent:
 
     def wait(self):
         self.barrier.wait()
+
+    def poll(self):
+        return self.conn.poll()
 
     def recv(self):
         msg = self.conn.recv()

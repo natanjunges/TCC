@@ -11,12 +11,13 @@ if __name__ == "__main__":
     with open("objects.json", "r") as file:
         objects = json.load(file)
 
-    seed = 0
-    #seed = random.randrange(sys.maxsize)
+    #seed = 0
+    seed = random.randrange(sys.maxsize)
     #interaction = State.FirstInteraction
     interaction = State.SecondInteraction
-    robot = RobotAgent(seed, interaction, len(objects), "robot1_kb.json")
-    human = HumanAgent(seed, interaction, objects)
+    noise = 0.1
+    robot = RobotAgent(seed, interaction, noise, len(objects), "robot1_kb.json")
+    human = HumanAgent(seed, interaction, noise, objects)
     human.connect(robot)
     robot.start()
     human.start()
