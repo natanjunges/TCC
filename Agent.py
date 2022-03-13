@@ -1,13 +1,12 @@
 from State import State
-from multiprocessing import Value, Process, Pipe, Barrier
+from multiprocessing import Value, Process
 from ctypes import c_bool
 import logging
 import sys
 
 class Agent:
-    def __init__(self, seed, interaction, noise):
+    def __init__(self, seed, noise):
         self.seed = seed
-        self.interaction = interaction
         self.noise = noise
         self.running = Value(c_bool, False)
         self.process = Process(target= self.run)
@@ -16,16 +15,6 @@ class Agent:
         self.logger.addHandler(logging.StreamHandler(sys.stdout))
         self.logger.setLevel(logging.INFO)
 
-    def connect(self, agent):
-        self_conn, agent_conn = Pipe()
-        self.conn = self_conn
-        self.barrier = Barrier(2)
-        agent.accept(agent_conn, self.barrier)
-
-    def accept(self, conn, barrier):
-        self.conn = conn
-        self.barrier = barrier
-
     def start(self):
         self.running.value = True
         self.process.start()
@@ -33,23 +22,22 @@ class Agent:
     def join(self):
         self.process.join()
 
-    def stop(self):
-        self.running.value = False
-        self.process.join()
+    def info(self, msg):
+        self.logger.info("{}#{} {}".format(self.__class__.__name__, self.process.pid, msg))
+
+    def debug(self, msg):
+        self.logger.debug("{}#{} {}".format(self.__class__.__name__, self.process.pid, msg))
 
     def send(self, msg):
         self.conn.send(msg)
-        self.logger.info("{}#{} sent: {}".format(self.__class__.__name__, self.process.pid, msg))
+        self.info("sent: {}".format(msg))
 
     def wait(self):
         self.barrier.wait()
 
-    def poll(self):
-        return self.conn.poll()
-
     def recv(self):
         msg = self.conn.recv()
-        self.logger.debug("{}#{} received: {}".format(self.__class__.__name__, self.process.pid, msg))
+        self.debug("received: {}".format(msg))
         return msg
 
     def run(self):

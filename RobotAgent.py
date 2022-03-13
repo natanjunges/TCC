@@ -7,8 +7,9 @@ import os.path
 import json
 
 class RobotAgent(Agent):
-    def __init__(self, seed, interaction, noise, n_objects, kb_file= None):
-        super().__init__(seed, interaction, noise)
+    def __init__(self, seed, noise, interaction, n_objects, kb_file= None):
+        super().__init__(seed, noise)
+        self.interaction = interaction
         self.n_objects = n_objects
         self.kb_file = kb_file
 
@@ -20,27 +21,56 @@ class RobotAgent(Agent):
 
         self.state = Value("i", State.Start.value)
 
+    def accept(self, conn, barrier):
+        self.conn = conn
+        self.barrier = barrier
+
+    def poll(self):
+        return self.conn.poll()
+
+    def m2s(self, msg):
+        msg = Message.fromString(msg)
+
+        if msg == Message.IntegerQuestion:
+            if self.interaction == State.FirstInteraction:
+                return {State.RRC1}
+            else:
+                return {State.RRC1, State.RIRC1}
+        elif msg == Message.String:
+            return {State.TW}
+        elif msg == Message.Boolean:
+            if self.interaction == State.FirstInteraction:
+                return {State.CW1}
+            else:
+                return {State.CW1, State.CI1}
+
     def run(self):
         random.seed(self.seed)
-        self.logger.info("{}#{} seed: {}".format(self.__class__.__name__, self.process.pid, self.seed))
-        self.logger.debug("{}#{} state: {}".format(self.__class__.__name__, self.process.pid, State(self.state.value)))
+        self.info("seed: {}".format(self.seed))
+        self.debug("state: {}".format(State(self.state.value)))
         self.state.value = self.interaction.value
-        self.logger.debug("{}#{} state: {}".format(self.__class__.__name__, self.process.pid, State(self.state.value)))
-        self.msg = None
+        self.debug("state: {}".format(self.interaction))
         self.object_index_1 = None
         self.object_index_2 = None
         self.word = None
+        msg = None
 
         while self.running.value:
             self.wait()
-            self.wait()
+
+            try:
+                self.wait()
+            except:
+                self.running.value = False
+                break
+
             state = State(self.state.value)
 
             if self.poll():
                 msg = self.recv()
                 states = self.m2s(msg)
-                self.logger.debug("{}#{} possible states: {}".format(self.__class__.__name__, self.process.pid, states))
-                # state = guess_current_state
+                self.debug("possible states: {}".format(states))
+                # state = guess_next_state(state, states)
 
                 if len(states) == 1:
                     state = states.pop()
@@ -54,7 +84,7 @@ class RobotAgent(Agent):
                     elif State.CI1 in states and state == State.RIC2:
                         state = State.CI1
 
-                self.logger.debug("{}#{} state: {}".format(self.__class__.__name__, self.process.pid, state))
+                self.debug("state: {}".format(state))
             elif state == State.TR:
                 self.TR()
             elif state == State.RRC2:
@@ -85,7 +115,7 @@ class RobotAgent(Agent):
             if state in {State.CW2, State.CI2}:
                 self.state.value = State.End.value
             elif state not in {State.RRC2, State.RIRC2}:
-                # self.state.value = guess_next_state
+                # self.state.value = guess_next_state(state)
 
                 if state == State.TR:
                     self.state.value = State.RRC1.value
@@ -110,7 +140,7 @@ class RobotAgent(Agent):
                 elif state == State.CI1:
                     self.state.value = State.CI2.value
 
-            self.logger.debug("{}#{} state: {}".format(self.__class__.__name__, self.process.pid, State(self.state.value)))
+            self.debug("state: {}".format(State(self.state.value)))
 
     def TR(self):
         if self.object_index_1 == None:
@@ -143,7 +173,7 @@ class RobotAgent(Agent):
 
     def CW2(self):
         self.kb.add((self.object_index_1, self.word))
-        self.logger.debug("{}#{} kb: {}".format(self.__class__.__name__, self.process.pid, self.kb))
+        self.debug("kb: {}".format(self.kb))
 
         if self.kb_file != None:
             with open(self.kb_file, "w") as file:
@@ -181,7 +211,7 @@ class RobotAgent(Agent):
 
     def CI2(self):
         self.kb.add((self.object_index_1, self.word))
-        self.logger.debug("{}#{} kb: {}".format(self.__class__.__name__, self.process.pid, self.kb))
+        self.debug("kb: {}".format(self.kb))
 
         if self.kb_file != None:
             with open(self.kb_file, "w") as file:
@@ -190,15 +220,3 @@ class RobotAgent(Agent):
         self.object_index_1 = None
         self.object_index_2 = None
         self.word = None
-
-    def m2s(self, msg):
-        msg = Message.fromString(msg)
-
-        if msg == Message.IntegerQuestion:
-            return {State.RRC1, State.RIRC1}
-        elif msg == Message.String:
-            return {State.TW}
-        elif msg == Message.Boolean:
-            return {State.CW1, State.CI1}
-        else:
-            return {}
