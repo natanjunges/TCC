@@ -17,7 +17,7 @@ if __name__ == "__main__":
     interaction = State.SecondInteraction
     noise = 0.1
     robot = RobotAgent(seed, noise, interaction, len(objects), "robot1_kb.json")
-    human = HumanAgent(seed, noise, objects)
+    human = HumanAgent(seed, noise, interaction, objects)
     human.connect(robot)
     robot.start()
     human.start()
