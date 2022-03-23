@@ -45,3 +45,9 @@ class State(Enum):
 
     FirstInteraction = TransmitReferent
     SecondInteraction = TransmitInducedReferent
+
+    def __str__(self):
+        return super().__str__().split(".")[1]
+
+    def __repr__(self):
+        return super().__str__()

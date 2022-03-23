@@ -4,13 +4,15 @@ import logging
 import sys
 
 class Agent:
-    def __init__(self, seed, noise, interaction):
+    def __init__(self, id, path_prefix, seed, noise, interaction):
+        self.id = id
+        self.path_prefix = path_prefix
         self.seed = seed
         self.noise = noise
         self.interaction = interaction
         self.process = Process(target= self.run)
         self.state = State.Start
-        self.logger = logging.getLogger("{}.{}".format(self.__class__.__name__, id(self)))
+        self.logger = logging.getLogger("{}.{}".format(self.__class__.__name__, self.id))
         self.logger.addHandler(logging.StreamHandler(sys.stdout))
         self.logger.setLevel(logging.INFO)
 
@@ -33,10 +35,10 @@ class Agent:
         self.process = Process(target= self.run)
 
     def info(self, msg):
-        self.logger.info("{}#{} {}".format(self.__class__.__name__, self.process.pid, msg))
+        self.logger.info("{}#{} {}".format(self.__class__.__name__, self.id, msg))
 
     def debug(self, msg):
-        self.logger.debug("{}#{} {}".format(self.__class__.__name__, self.process.pid, msg))
+        self.logger.debug("{}#{} {}".format(self.__class__.__name__, self.id, msg))
 
     def send(self, msg):
         self.conn.send(msg)

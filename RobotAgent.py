@@ -7,13 +7,13 @@ import os.path
 import json
 
 class RobotAgent(Agent):
-    def __init__(self, seed, noise, interaction, n_objects, kb_file= None):
-        super().__init__(seed, noise, interaction)
+    def __init__(self, id, path_prefix, seed, noise, interaction, n_objects):
+        super().__init__(id, path_prefix, seed, noise, interaction)
         self.n_objects = n_objects
-        self.kb_file = kb_file
+        self.kb_file = "{}/robot{}_kb.json".format(self.path_prefix, self.id)
 
-        if kb_file != None and os.path.isfile(kb_file):
-            with open(kb_file, "r") as file:
+        if os.path.isfile(self.kb_file):
+            with open(self.kb_file, "r") as file:
                 self.kb = {(object_index, word) for object_index, word in json.load(file)}
         else:
             self.kb = set()
@@ -84,13 +84,15 @@ class RobotAgent(Agent):
             prev_state = state
             state = State(self.state.value)
 
-            if state in {State.RWC2, State.RIC2}:
-                prev_state = state
-
             if self.poll():
                 msg = self.recv()
                 states = self.possible_states(msg)
                 self.debug("possible states: {}".format(states))
+
+                if (State.TW in states and prev_state != State.CR or State.CW1 in states) and state in {State.RWC2, State.RIC2}:
+                    self.states.append(state)
+                    prev_state = state
+
                 state = self.guess_next_state(prev_state, states)
                 self.debug("state: {}".format(state))
 
@@ -168,9 +170,8 @@ class RobotAgent(Agent):
         self.kb.add((self.object_index_1, self.word))
         self.debug("kb: {}".format(self.kb))
 
-        if self.kb_file != None:
-            with open(self.kb_file, "w") as file:
-                json.dump(sorted(self.kb), file)
+        with open(self.kb_file, "w") as file:
+            json.dump(sorted(self.kb), file)
 
         self.object_index_1 = None
         self.object_index_2 = None
@@ -206,9 +207,8 @@ class RobotAgent(Agent):
         self.kb.add((self.object_index_1, self.word))
         self.debug("kb: {}".format(self.kb))
 
-        if self.kb_file != None:
-            with open(self.kb_file, "w") as file:
-                json.dump(sorted(self.kb), file)
+        with open(self.kb_file, "w") as file:
+            json.dump(sorted(self.kb), file)
 
         self.object_index_1 = None
         self.object_index_2 = None

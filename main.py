@@ -8,16 +8,19 @@ import sys
 import json
 
 if __name__ == "__main__":
-    with open("objects.json", "r") as file:
+    path_prefix = "."
+
+    with open("{}/objects.json".format(path_prefix), "r") as file:
         objects = json.load(file)
 
+    id = 1
     #seed = 0
     seed = random.randrange(sys.maxsize)
     #interaction = State.FirstInteraction
     interaction = State.SecondInteraction
     noise = 0.1
-    robot = RobotAgent(seed, noise, interaction, len(objects), "robot1_kb.json")
-    human = HumanAgent(seed, noise, interaction, objects)
+    robot = RobotAgent(id, path_prefix, seed, noise, interaction, len(objects))
+    human = HumanAgent(id, path_prefix, seed, noise, interaction, objects)
     human.connect(robot)
     robot.start()
     human.start()

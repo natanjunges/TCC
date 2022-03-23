@@ -2,11 +2,15 @@ from Agent import Agent
 from State import State
 import random
 from multiprocessing import Pipe, Barrier
+import json
+import os.path
+from datetime import datetime
 
 class HumanAgent(Agent):
-    def __init__(self, seed, noise, interaction, objects):
-        super().__init__(seed, noise, interaction)
+    def __init__(self, id, path_prefix, seed, noise, interaction, objects):
+        super().__init__(id, path_prefix, seed, noise, interaction)
         self.objects = objects
+        self.log_file = "{}/robot{}_log.json".format(self.path_prefix, self.id)
 
     def reset(self, seed= None, noise= None, interaction= None):
         super().reset(seed, noise, interaction)
@@ -25,6 +29,115 @@ class HumanAgent(Agent):
         self.barrier.abort()
 
     def can_be_next(self, next_state):
+        # Legal state transitions for FirstInteraction (19):
+        # TR
+        #     RRC1
+        # RRC1
+        #     TR
+        #     RRC2
+        #     TW
+        # RRC2
+        #     TR
+        #     CR
+        # CR
+        #     TW
+        # TW
+        #     TR
+        #     CR
+        #     TW
+        #     RWC1
+        # RWC1
+        #     RWC2
+        # RWC2
+        #     TW
+        #     CW1
+        # CW1
+        #     TR
+        #     CR
+        #     TW
+        #     CW1
+        #     CW2
+        # Legal state transitions for SecondInteraction (64):
+        # TR
+        #     RRC1
+        #     RIRC1
+        # RRC1
+        #     TR
+        #     RRC2
+        #     TW
+        #     TIR
+        #     RIRC2
+        #     RIC1
+        # RRC2
+        #     TR
+        #     CR
+        # CR
+        #     TW
+        # TW
+        #     TR
+        #     CR
+        #     TW
+        #     RWC1
+        #     TIR
+        #     CIR
+        #     RIC1
+        # RWC1
+        #     RWC2
+        # RWC2
+        #     TW
+        #     CW1
+        # CW1
+        #     TR
+        #     CR
+        #     TW
+        #     CW1
+        #     CW2
+        #     TIR
+        #     CIR
+        #     RIC1
+        #     CI1
+        #     CI2
+        # TIR
+        #     RRC1
+        #     RIRC1
+        # RIRC1
+        #     TR
+        #     RRC2
+        #     TW
+        #     TIR
+        #     RIRC2
+        #     RIC1
+        # RIRC2
+        #     TIR
+        #     CIR
+        # CIR
+        #     TR
+        #     CR
+        #     TW
+        #     CW1
+        #     CW2
+        #     TIR
+        #     CIR
+        #     RIC1
+        #     CI1
+        #     CI2
+        # RIC1
+        #     RIC2
+        # RIC2
+        #     TW
+        #     CI1
+        # CI1
+        #     TR
+        #     CR
+        #     TW
+        #     CW1
+        #     CW2
+        #     TIR
+        #     CIR
+        #     RIC1
+        #     CI1
+        #     CI2
+
         if self.state in {State.RRC2, State.RIRC2} or next_state in {State.TR, State.TIR, State.RIC1}:
             return True
         elif next_state in {State.RRC1, State.RIRC1}:
@@ -108,22 +221,45 @@ class HumanAgent(Agent):
             elif state == State.CI2:
                 state = State.CW2
 
-        return 0.0375 * state.value + 0.625
+        return 0.02 * state.value + 0.8
 
     def b(self, state):
-        return 1 if self.can_be_next(state) else 0.7
+        return 1 if self.can_be_next(state) else 0.84
 
     def update_transitions(self, state, condition= True, b= 1):
         self.state_transitions += 1
 
-        if self.state_transitions > (28 if self.interaction == State.FirstInteraction else 26) and condition:
+        if self.state_transitions > (28 if self.interaction == State.FirstInteraction else 20) and condition:
             self.abort()
             self.info("state: {}".format(state))
             self.info("transitions: {}".format(self.state_transitions))
-            self.info("score: {}".format(self.a(state) * b))
+            score = self.a(state) * b * 0.84
+            self.info("score: {}".format(score))
+            self.save_log(state, score)
             return False
 
         return True
+
+    def save_log(self, state, score):
+        if os.path.isfile(self.log_file):
+            with open(self.log_file, "r") as file:
+                log = json.load(file)
+        else:
+            log = []
+
+        interaction = {
+            "timestamp": datetime.utcnow().isoformat(" "),
+            "seed": self.seed,
+            "noise": self.noise,
+            "interaction": "FirstInteraction" if self.interaction == State.FirstInteraction else "SecondInteraction",
+            "state": str(state),
+            "transitions": self.state_transitions,
+            "score": score
+        }
+        log.append(interaction)
+
+        with open(self.log_file, "w") as file:
+            json.dump(log, file)
 
     def run(self):
         random.seed(self.seed)
@@ -187,12 +323,15 @@ class HumanAgent(Agent):
                             break
                     elif self.state in {State.CW2, State.CI2}:
                         self.info("transitions: {}".format(self.state_transitions))
-                        self.info("score: {}".format(self.a(self.state)))
+                        self.info("score: {}".format(1.0))
+                        self.save_log(self.state, 1.0)
                 else:
                     self.abort()
                     self.info("state: {}".format(state))
                     self.info("transitions: {}".format(self.state_transitions))
-                    self.info("score: {}".format(self.a(state) * 0.7))
+                    score = self.a(state) * 0.84
+                    self.info("score: {}".format(score))
+                    self.save_log(state, score)
                     break
 
             self.wait()
