@@ -47,7 +47,7 @@ class State(Enum):
     SecondInteraction = TransmitInducedReferent
 
     def __str__(self):
-        return super().__str__().split(".")[1]
+        return super().__str__().lstrip("State.")
 
     def __repr__(self):
         return super().__str__()

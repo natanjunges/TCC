@@ -10,7 +10,7 @@ import json
 if __name__ == "__main__":
     path_prefix = "."
 
-    with open("{}/objects.json".format(path_prefix), "r") as file:
+    with open(path_prefix + "/objects.json", "r") as file:
         objects = json.load(file)
 
     id = 1

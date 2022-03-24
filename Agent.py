@@ -2,6 +2,7 @@ from State import State
 from multiprocessing import Process
 import logging
 import sys
+import random
 
 class Agent:
     def __init__(self, id, path_prefix, seed, noise, interaction):
@@ -42,15 +43,28 @@ class Agent:
 
     def send(self, msg):
         self.conn.send(msg)
-        self.info("sent: {}".format(msg))
+        self.info("sent: " + msg)
 
     def recv(self):
         msg = self.conn.recv()
-        self.debug("received: {}".format(msg))
+        self.debug("received: " + msg)
         return msg
 
     def wait(self):
+        self.debug("waiting")
         self.barrier.wait()
+        self.debug("continuing")
+
+    def notify(self):
+        self.debug("notifying")
+        self.barrier.wait()
+        self.debug("notified")
 
     def run(self):
-        pass
+        random.seed(self.seed)
+        self.info("seed: {}".format(self.seed))
+        self.info("noise: {}".format(self.noise))
+        self.info("interaction: " + ("FirstInteraction" if self.interaction == State.FirstInteraction else "SecondInteraction"))
+        self.object_index_1 = None
+        self.object_index_2 = None
+        self.word = None

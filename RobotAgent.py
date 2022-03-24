@@ -6,23 +6,50 @@ from multiprocessing import Value
 import os.path
 import json
 
+def insert(list, item):
+    i = 0
+    l = len(list)
+    li = None
+
+    while i < l:
+        li = list[i]
+
+        if li < item:
+            i += 1
+        else:
+            break
+
+    if i == l or li != item:
+        list.insert(i, item)
+        return True
+    else:
+        return False
+
 class RobotAgent(Agent):
-    def __init__(self, id, path_prefix, seed, noise, interaction, n_objects):
+    def __init__(self, id, path_prefix, seed, noise, interaction, n_objects, initial_state= None):
         super().__init__(id, path_prefix, seed, noise, interaction)
         self.n_objects = n_objects
         self.kb_file = "{}/robot{}_kb.json".format(self.path_prefix, self.id)
+        self.initial_state = initial_state if self.interaction == State.SecondInteraction else self.interaction
 
         if os.path.isfile(self.kb_file):
             with open(self.kb_file, "r") as file:
-                self.kb = {(object_index, word) for object_index, word in json.load(file)}
+                self.kb = json.load(file)
         else:
-            self.kb = set()
+            self.kb = []
 
         self.state = Value("i", State.Start.value)
 
-    def reset(self, seed= None, noise= None, interaction= None):
+    def reset(self, seed= None, noise= None, interaction= None, initial_state= None):
         super().reset(seed, noise, interaction)
+        self.initial_state = initial_state if self.interaction == State.SecondInteraction else self.interaction
         self.state.value = State.Start.value
+
+        if os.path.isfile(self.kb_file):
+            with open(self.kb_file, "r") as file:
+                self.kb = json.load(file)
+        else:
+            self.kb = []
 
     def accept(self, conn, barrier):
         self.conn = conn
@@ -36,44 +63,39 @@ class RobotAgent(Agent):
 
         if msg == Message.IntegerQuestion:
             if self.interaction == State.FirstInteraction:
-                return {State.RRC1}
-            else:
-                return {State.RRC1, State.RIRC1}
+                return [State.RRC1]
+            elif self.interaction == State.SecondInteraction:
+                return [State.RRC1, State.RIRC1]
         elif msg == Message.String:
-            return {State.TW}
+            return [State.TW]
         elif msg == Message.Boolean:
             if self.interaction == State.FirstInteraction:
-                return {State.CW1}
-            else:
-                return {State.CW1, State.CI1}
+                return [State.CW1]
+            elif self.interaction == State.SecondInteraction:
+                return [State.CW1, State.CI1]
 
     def guess_next_state(self, state, states= None):
         if states == None:
-            states = {State.TR, State.RRC1, State.RRC2, State.CR, State.TW, State.RWC1, State.RWC2, State.CW1, State.CW2}
+            states = [State.TR, State.RRC1, State.RRC2, State.CR, State.TW, State.RWC1, State.RWC2, State.CW1, State.CW2]
 
             if self.interaction == State.SecondInteraction:
-                states.update({State.TIR, State.RIRC1, State.RIRC2, State.CIR, State.RIC1, State.RIC2, State.CI1, State.CI2})
+                states += [State.TIR, State.RIRC1, State.RIRC2, State.CIR, State.RIC1, State.RIC2, State.CI1, State.CI2]
 
         if len(states) == 1:
-            return states.pop()
+            return states[0]
         else:
-            return State(random.choice(sorted(map(lambda s: s.value, states))))
+            return random.choice(states)
 
     def run(self):
-        random.seed(self.seed)
-        self.info("seed: {}".format(self.seed))
-        self.debug("state: {}".format(State(self.state.value)))
-        self.state.value = self.interaction.value
-        self.debug("state: {}".format(self.interaction))
+        super().run()
+        self.info("initial state: {}".format(self.initial_state))
+        self.state.value = (self.initial_state if self.initial_state != None else random.choice([State.TR, State.TIR])).value
         self.states = []
-        self.object_index_1 = None
-        self.object_index_2 = None
-        self.word = None
         msg = None
         state = State.Start
 
         while True:
-            self.wait()
+            self.notify()
 
             try:
                 self.wait()
@@ -90,11 +112,28 @@ class RobotAgent(Agent):
                 self.debug("possible states: {}".format(states))
 
                 if (State.TW in states and prev_state != State.CR or State.CW1 in states) and state in {State.RWC2, State.RIC2}:
+                    self.notify()
+
+                    try:
+                        self.wait()
+                    except:
+                        self.info("states: {}".format(self.states))
+                        break
+
+                    self.debug("state: {}".format(state))
                     self.states.append(state)
                     prev_state = state
 
                 state = self.guess_next_state(prev_state, states)
-                self.debug("state: {}".format(state))
+                self.debug("guessed state: {}".format(state))
+                self.state.value = state.value
+                self.notify()
+
+                try:
+                    self.wait()
+                except:
+                    self.info("states: {}".format(self.states))
+                    break
 
                 if state in {State.RRC1, State.RIRC1}:
                     self.object_index_2 = None
@@ -128,6 +167,7 @@ class RobotAgent(Agent):
                 self.info("states: {}".format(self.states))
                 break
 
+            self.debug("state: {}".format(state))
             self.states.append(state)
 
             if state in {State.CW2, State.CI2}:
@@ -135,7 +175,7 @@ class RobotAgent(Agent):
             elif state not in {State.RRC2, State.RIRC2}:
                 self.state.value = self.guess_next_state(state).value
 
-            self.debug("state: {}".format(State(self.state.value)))
+            self.debug("guessed state: {}".format(State(self.state.value)))
 
     def TR(self):
         if self.object_index_1 == None:
@@ -162,16 +202,16 @@ class RobotAgent(Agent):
 
         if self.noise >= 1 or self.noise > 0 and random.random() < self.noise:
             x = random.randrange(len(self.word))
-            self.word = "{}{}".format(self.word[:x], self.word[x + 1:])
+            self.word = self.word[:x] + self.word[x + 1:]
 
-        self.send("{}?".format(self.word))
+        self.send(self.word + "?")
 
     def CW2(self):
-        self.kb.add((self.object_index_1, self.word))
-        self.debug("kb: {}".format(self.kb))
+        if insert(self.kb, [self.object_index_1, self.word]):
+            self.debug("kb: {}".format(self.kb))
 
-        with open(self.kb_file, "w") as file:
-            json.dump(sorted(self.kb), file)
+            with open(self.kb_file, "w") as file:
+                json.dump(self.kb, file)
 
         self.object_index_1 = None
         self.object_index_2 = None
@@ -201,14 +241,14 @@ class RobotAgent(Agent):
         if self.word == None:
             self.word = random.choice(sorted({word for _, word in self.kb}))
 
-        self.send("{}?".format(self.word))
+        self.send(self.word + "?")
 
     def CI2(self):
-        self.kb.add((self.object_index_1, self.word))
-        self.debug("kb: {}".format(self.kb))
+        if insert(self.kb, [self.object_index_1, self.word]):
+            self.debug("kb: {}".format(self.kb))
 
-        with open(self.kb_file, "w") as file:
-            json.dump(sorted(self.kb), file)
+            with open(self.kb_file, "w") as file:
+                json.dump(self.kb, file)
 
         self.object_index_1 = None
         self.object_index_2 = None
