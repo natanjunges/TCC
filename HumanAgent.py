@@ -1,5 +1,6 @@
 from Agent import Agent
 from State import State
+from utils import insert, merge, sub
 import random
 from multiprocessing import Pipe, Barrier
 import json
@@ -221,6 +222,22 @@ class HumanAgent(Agent):
 
         return 0.02 * state.value + 0.8
 
+    def d(self):
+        transitions = []
+        new_transitions = self.get_transitions()
+
+        if os.path.isfile(self.log_file):
+            with open(self.log_file, "r") as file:
+                log = json.load(file)
+
+            for interaction in log:
+                if interaction["interaction"] == ("FirstInteraction" if self.interaction == State.FirstInteraction else "SecondInteraction"):
+                    merge(transitions, [[State[transition[0]], State[transition[1]]] for transition in interaction["new_transitions"]])
+
+        sub(new_transitions, transitions)
+        self.debug("visited transitions: {}".format(transitions))
+        return (new_transitions, (0.0076 if self.interaction == State.FirstInteraction else 0.0023) * (len(transitions) + len(new_transitions)) + 0.84)
+
     def update_transitions(self, state, condition, legal):
         self.state_transitions += 1
 
@@ -232,10 +249,11 @@ class HumanAgent(Agent):
 
     def kill_robot(self, state, legal, limit):
         self.abort()
-        score = self.a(state) * (1 if legal else 0.84) * (1 if limit else 0.84)
-        self.save_log(state, legal, score)
+        d = self.d()
+        score = self.a(state) * (1 if legal else 0.84) * (1 if limit else 0.84) * d[1]
+        self.save_log(state, legal, d[0], score)
 
-    def save_log(self, state, legal, score):
+    def save_log(self, state, legal, transitions, score):
         if os.path.isfile(self.log_file):
             with open(self.log_file, "r") as file:
                 log = json.load(file)
@@ -251,6 +269,7 @@ class HumanAgent(Agent):
             "last_state": str(state),
             "legal_transition": legal,
             "n_transitions": self.state_transitions,
+            "new_transitions": [[str(transition[0]), str(transition[1])] for transition in transitions],
             "score": score
         }
         log.append(interaction)
@@ -260,8 +279,20 @@ class HumanAgent(Agent):
 
         self.info("last state: {}".format(state))
         self.info("legal transition: {}".format(legal))
-        self.info("transitions: {}".format(self.state_transitions))
+        self.info("number of transitions: {}".format(self.state_transitions))
+        self.info("new transitions: {}".format(transitions))
         self.info("score: {}".format(score))
+
+    def get_transitions(self):
+        i = 0
+        l = len(self.states) - 1
+        transitions = []
+
+        while i < l:
+            insert(transitions, [self.states[i], self.states[i + 1]])
+            i += 1
+
+        return transitions
 
     def sync_state(self, prev_state):
         self.notify()
@@ -270,6 +301,7 @@ class HumanAgent(Agent):
 
         if self.can_be_next(prev_state, state):
             self.state = state
+            self.states.append(state)
             self.debug("synced state: {}".format(self.state))
 
             if self.state in {State.RWC2, State.RIC2}:
@@ -284,6 +316,7 @@ class HumanAgent(Agent):
 
                 if cbn:
                     self.state = state
+                    self.states.append(state)
                     self.debug("synced state: {}".format(self.state))
                 else:
                     self.kill_robot(state, False, True)
@@ -301,6 +334,7 @@ class HumanAgent(Agent):
         self.word_2 = None
         self.state_transitions = -1
         self.initial_state = None
+        self.states = []
         state = State.Start
 
         while True:
@@ -313,6 +347,7 @@ class HumanAgent(Agent):
             state = State(self.robot_state.value)
 
             if not self.update_transitions(state, self.state not in {State.CW2, State.CI2}, self.can_be_next(self.state, state)):
+                self.debug("states: {}".format(self.states))
                 break
 
             if self.state in {State.TR, State.CR, State.RWC1, State.CW2, State.TIR, State.RIC1, State.CI2}:
@@ -339,14 +374,15 @@ class HumanAgent(Agent):
                 self.debug("state: {}".format(self.state))
 
                 if not self.run_state():
+                    self.debug("states: {}".format(self.states))
                     break
 
-                ps = self.sync_state(prev_state)
+                prev_state = self.sync_state(prev_state)
 
-                if ps != None:
-                    prev_state = ps
+                if prev_state != None:
                     state = self.state
                 else:
+                    self.debug("states: {}".format(self.states))
                     break
             else:
                 if self.state in {State.RRC2, State.RIRC2}:
@@ -362,19 +398,25 @@ class HumanAgent(Agent):
 
                     if self.state in {State.RRC1, State.TW, State.RWC2, State.CW1, State.RIRC1, State.RIC2, State.CI1}:
                         if not self.run_state():
+                            self.debug("states: {}".format(self.states))
                             break
 
-                        ps = self.sync_state(prev_state)
+                        prev_state = self.sync_state(prev_state)
 
-                        if ps != None:
-                            prev_state = ps
+                        if prev_state != None:
                             state = self.state
                         else:
+                            self.debug("states: {}".format(self.states))
                             break
-                    elif self.state in {State.CW2, State.CI2}:
-                        self.save_log(self.state, True, 1.0)
+                    else:
+                        self.states.append(state)
+
+                        if self.state in {State.CW2, State.CI2}:
+                            d = self.d()
+                            self.save_log(self.state, True, d[0], d[1])
                 else:
                     self.kill_robot(state, False, True)
+                    self.debug("states: {}".format(self.states))
                     break
 
             self.notify()

@@ -51,3 +51,27 @@ class State(Enum):
 
     def __repr__(self):
         return super().__str__()
+
+    def __lt__(self, other):
+        if isinstance(other, State):
+            return self.value < other.value
+        else:
+            raise TypeError("'<' not supported between instances of 'State' and '{}'".format(type(other).__name__))
+
+    def __le__(self, other):
+        if isinstance(other, State):
+            return self.value <= other.value
+        else:
+            raise TypeError("'<=' not supported between instances of 'State' and '{}'".format(type(other).__name__))
+
+    def __ge__(self, other):
+        if isinstance(other, State):
+            return self.value >= other.value
+        else:
+            raise TypeError("'>=' not supported between instances of 'State' and '{}'".format(type(other).__name__))
+
+    def __gt__(self, other):
+        if isinstance(other, State):
+            return self.value > other.value
+        else:
+            raise TypeError("'>' not supported between instances of 'State' and '{}'".format(type(other).__name__))

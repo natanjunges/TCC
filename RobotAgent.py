@@ -1,29 +1,11 @@
 from Agent import Agent
 from State import State
 from Message import Message
+from utils import insert
 import random
 from multiprocessing import Value
 import os.path
 import json
-
-def insert(list, item):
-    i = 0
-    l = len(list)
-    li = None
-
-    while i < l:
-        li = list[i]
-
-        if li < item:
-            i += 1
-        else:
-            break
-
-    if i == l or li != item:
-        list.insert(i, item)
-        return True
-    else:
-        return False
 
 class RobotAgent(Agent):
     def __init__(self, id, path_prefix, seed, noise, interaction, n_objects, initial_state= None):
