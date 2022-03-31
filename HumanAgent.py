@@ -31,119 +31,96 @@ class HumanAgent(Agent):
 
     def can_be_next(self, state, next_state):
         # Legal state transitions for FirstInteraction (21):
-        # TR
-        #     RRC1
-        # RRC1
-        #     TR
-        #     RRC2
-        #     TW
-        # RRC2
-        #     TR
-        #     CR
-        # CR
-        #     TW
-        # TW
-        #     TR
-        #     CR
-        #     TW
-        #     RWC1
-        # RWC1
-        #     TW
-        #     RWC2
-        #     CW1
-        # RWC2
-        #     TW
-        #     CW1
-        # CW1
-        #     TR
-        #     CR
-        #     TW
-        #     CW1
-        #     CW2
+        # TR, RRC1
+        # RRC1, TR
+        # RRC1, RRC2
+        # RRC1, TW
+        # RRC2, TR
+        # RRC2, CR
+        # CR, TW
+        # TW, TR
+        # TW, CR
+        # TW, TW
+        # TW, RWC1
+        # RWC1, TW
+        # RWC1, RWC2
+        # RWC1, CW1
+        # RWC2, TW
+        # RWC2, CW1
+        # CW1, TR
+        # CW1, CR
+        # CW1, TW
+        # CW1, CW1
+        # CW1, CW2
         # Legal state transitions for SecondInteraction (68):
-        # TR
-        #     RRC1
-        #     RIRC1
-        # RRC1
-        #     TR
-        #     RRC2
-        #     TW
-        #     TIR
-        #     RIRC2
-        #     RIC1
-        # RRC2
-        #     TR
-        #     CR
-        # CR
-        #     TW
-        # TW
-        #     TR
-        #     CR
-        #     TW
-        #     RWC1
-        #     TIR
-        #     CIR
-        #     RIC1
-        # RWC1
-        #     TW
-        #     RWC2
-        #     CW1
-        # RWC2
-        #     TW
-        #     CW1
-        # CW1
-        #     TR
-        #     CR
-        #     TW
-        #     CW1
-        #     CW2
-        #     TIR
-        #     CIR
-        #     RIC1
-        #     CI1
-        #     CI2
-        # TIR
-        #     RRC1
-        #     RIRC1
-        # RIRC1
-        #     TR
-        #     RRC2
-        #     TW
-        #     TIR
-        #     RIRC2
-        #     RIC1
-        # RIRC2
-        #     TIR
-        #     CIR
-        # CIR
-        #     TR
-        #     CR
-        #     TW
-        #     CW1
-        #     CW2
-        #     TIR
-        #     CIR
-        #     RIC1
-        #     CI1
-        #     CI2
-        # RIC1
-        #     TW
-        #     RIC2
-        #     CI1
-        # RIC2
-        #     TW
-        #     CI1
-        # CI1
-        #     TR
-        #     CR
-        #     TW
-        #     CW1
-        #     CW2
-        #     TIR
-        #     CIR
-        #     RIC1
-        #     CI1
-        #     CI2
+        # TR, RRC1
+        # TR, RIRC1
+        # RRC1, TR
+        # RRC1, RRC2
+        # RRC1, TW
+        # RRC1, TIR
+        # RRC1, RIRC2
+        # RRC1, RIC1
+        # RRC2, TR
+        # RRC2, CR
+        # CR, TW
+        # TW, TR
+        # TW, CR
+        # TW, TW
+        # TW, RWC1
+        # TW, TIR
+        # TW, CIR
+        # TW, RIC1
+        # RWC1, TW
+        # RWC1, RWC2
+        # RWC1, CW1
+        # RWC2, TW
+        # RWC2, CW1
+        # CW1, TR
+        # CW1, CR
+        # CW1, TW
+        # CW1, CW1
+        # CW1, CW2
+        # CW1, TIR
+        # CW1, CIR
+        # CW1, RIC1
+        # CW1, CI1
+        # CW1, CI2
+        # TIR, RRC1
+        # TIR, RIRC1
+        # RIRC1, TR
+        # RIRC1, RRC2
+        # RIRC1, TW
+        # RIRC1, TIR
+        # RIRC1, RIRC2
+        # RIRC1, RIC1
+        # RIRC2, TIR
+        # RIRC2, CIR
+        # CIR, TR
+        # CIR, CR
+        # CIR, TW
+        # CIR, CW1
+        # CIR, CW2
+        # CIR, TIR
+        # CIR, CIR
+        # CIR, RIC1
+        # CIR, CI1
+        # CIR, CI2
+        # RIC1, TW
+        # RIC1, RIC2
+        # RIC1, CI1
+        # RIC2, TW
+        # RIC2, CI1
+        # CI1, TR
+        # CI1, CR
+        # CI1, TW
+        # CI1, CW1
+        # CI1, CW2
+        # CI1, TIR
+        # CI1, CIR
+        # CI1, RIC1
+        # CI1, CI1
+        # CI1, CI2
 
         if state in {State.RRC2, State.RIRC2} or next_state in {State.TR, State.TIR, State.RIC1}:
             return True

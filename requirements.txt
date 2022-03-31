@@ -1,0 +1,1 @@
+-e git+https://github.com/daineto/meta-planning#egg=meta-planning
