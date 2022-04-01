@@ -1,0 +1,85 @@
+(define
+    (domain PFL)
+    (:requirements :strips)
+    (:types message variable - object)
+    (:predicates
+        (sent_to_human ?m1 - message)
+        (sent_to_robot ?m1 - message)
+        (set ?v1 - variable)
+    )
+    (:action goto_TIR_pre
+        :parameters (?oi2 ?w - variable)
+        :precondition ()
+        :effect ()
+    )
+    (:action goto_TIR
+        :parameters (?oi1 ?oi2 ?w - variable ?I - message)
+        :precondition ()
+        :effect ()
+    )
+    (:action goto_RIRC1_pre
+        :parameters (?w1 ?w2 - variable)
+        :precondition ()
+        :effect ()
+    )
+    (:action goto_RIRC1
+        :parameters (?oi ?w1 ?w2 - variable ?I ?IQ - message)
+        :precondition ()
+        :effect ()
+    )
+    (:action goto_RIRC2_pre
+        :parameters (?w - variable)
+        :precondition ()
+        :effect ()
+    )
+    (:action goto_RIRC2
+        :parameters (?oi1 ?oi2 ?w - variable ?IQ - message)
+        :precondition ()
+        :effect ()
+    )
+    (:action goto_CIR
+        :parameters (?oi1 ?oi2 - variable ?B - message)
+        :precondition ()
+        :effect ()
+    )
+    (:action goto_CIR_post
+        :parameters (?B - message)
+        :precondition ()
+        :effect ()
+    )
+    (:action goto_RIC1
+        :parameters (?w - variable ?S ?SQ - message)
+        :precondition ()
+        :effect ()
+    )
+    (:action goto_RIC2_pre
+        :parameters (?w1 - variable)
+        :precondition ()
+        :effect ()
+    )
+    (:action goto_RIC2
+        :parameters (?oi ?w1 ?w2 - variable ?SQ - message)
+        :precondition ()
+        :effect ()
+    )
+    (:action goto_CI1
+        :parameters (?oi ?w2 - variable ?B - message)
+        :precondition ()
+        :effect ()
+    )
+    (:action goto_CI1_post
+        :parameters (?B - message)
+        :precondition ()
+        :effect ()
+    )
+    (:action goto_CI2_pre
+        :parameters (?oi2 - variable)
+        :precondition ()
+        :effect ()
+    )
+    (:action goto_CI2
+        :parameters (?oi1 ?oi2 ?w - variable)
+        :precondition ()
+        :effect ()
+    )
+)

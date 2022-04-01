@@ -16,9 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with TCC.  If not, see <https://www.gnu.org/licenses/>.
 
-from RobotAgent import RobotAgent
-from HumanAgent import HumanAgent
-from State import State
+from agent_core.RobotAgent import RobotAgent
+from agent_core.HumanAgent import HumanAgent
+from agent_core.State import State
 import random
 import sys
 import json

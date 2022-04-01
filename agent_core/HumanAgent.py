@@ -14,9 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with TCC.  If not, see <https://www.gnu.org/licenses/>.
 
-from Agent import Agent
-from State import State
-from utils import insert, merge, sub
+from .Agent import Agent
+from .State import State
+from .utils import insert, merge, sub
 import random
 from multiprocessing import Pipe, Barrier
 import json

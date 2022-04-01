@@ -14,10 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with TCC.  If not, see <https://www.gnu.org/licenses/>.
 
-from Agent import Agent
-from State import State
-from Message import Message
-from utils import insert
+from .Agent import Agent
+from .State import State
+from .Message import Message
+from .utils import insert
 import random
 from multiprocessing import Value
 import os.path

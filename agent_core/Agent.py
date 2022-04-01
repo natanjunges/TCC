@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with TCC.  If not, see <https://www.gnu.org/licenses/>.
 
-from State import State
+from .State import State
 from multiprocessing import Process
 import logging
 import sys

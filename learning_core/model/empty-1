@@ -1,0 +1,90 @@
+(define
+    (domain PFL)
+    (:requirements :strips)
+    (:types message variable - object)
+    (:predicates
+        (sent_to_human ?m1 - message)
+        (sent_to_robot ?m1 - message)
+        (set ?v1 - variable)
+    )
+    (:action goto_TR_pre
+        :parameters (?oi2 ?w - variable)
+        :precondition ()
+        :effect ()
+    )
+    (:action goto_TR
+        :parameters (?oi1 ?oi2 ?w - variable ?I - message)
+        :precondition ()
+        :effect ()
+    )
+    (:action goto_RRC1_pre
+        :parameters (?w1 ?w2 - variable)
+        :precondition ()
+        :effect ()
+    )
+    (:action goto_RRC1
+        :parameters (?oi ?w1 ?w2 - variable ?I ?IQ - message)
+        :precondition ()
+        :effect ()
+    )
+    (:action goto_RRC2_pre
+        :parameters (?w - variable)
+        :precondition ()
+        :effect ()
+    )
+    (:action goto_RRC2
+        :parameters (?oi1 ?oi2 ?w - variable ?IQ - message)
+        :precondition ()
+        :effect ()
+    )
+    (:action goto_CR
+        :parameters (?oi1 ?oi2 - variable ?B - message)
+        :precondition ()
+        :effect ()
+    )
+    (:action goto_CR_post
+        :parameters (?B - message)
+        :precondition ()
+        :effect ()
+    )
+    (:action goto_TW_pre
+        :parameters (?w2 - variable)
+        :precondition ()
+        :effect ()
+    )
+    (:action goto_TW
+        :parameters (?w1 ?w2 - variable ?S - message)
+        :precondition ()
+        :effect ()
+    )
+    (:action goto_RWC1
+        :parameters (?w - variable ?S ?SQ - message)
+        :precondition ()
+        :effect ()
+    )
+    (:action goto_RWC2
+        :parameters (?w1 ?w2 - variable ?SQ - message)
+        :precondition ()
+        :effect ()
+    )
+    (:action goto_CW1
+        :parameters (?w1 ?w2 - variable ?B - message)
+        :precondition ()
+        :effect ()
+    )
+    (:action goto_CW1_post
+        :parameters (?B - message)
+        :precondition ()
+        :effect ()
+    )
+    (:action goto_CW2_pre
+        :parameters (?oi2 - variable)
+        :precondition ()
+        :effect ()
+    )
+    (:action goto_CW2
+        :parameters (?oi1 ?oi2 ?w - variable)
+        :precondition ()
+        :effect ()
+    )
+)
