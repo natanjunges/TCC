@@ -18,10 +18,13 @@ from .Agent import Agent
 from .State import State
 from .Message import Message
 from .utils import insert
+from learning_core.Learner import Learner
 import random
 from multiprocessing import Value
 import os.path
 import json
+from shutil import copyfile
+import os
 
 class RobotAgent(Agent):
     def __init__(self, id, path_prefix, seed, noise, interaction, n_objects, initial_state= None):
@@ -36,6 +39,15 @@ class RobotAgent(Agent):
         else:
             self.kb = []
 
+        self.model_file = "{}/robot{}_model.pddl".format(self.path_prefix, self.id)
+
+        if not os.path.isfile(self.model_file):
+            copyfile("./learning_core/model/empty-1.pddl", self.model_file)
+
+            if self.interaction == State.SecondInteraction:
+                os.system("patch \"{}\" < ./learning_core/model/empty-2.pddl.patch > /dev/null".format(self.model_file))
+
+        self.learner = Learner(self)
         self.state = Value("i", State.Start.value)
 
     def reset(self, seed= None, noise= None, interaction= None, initial_state= None):
@@ -49,12 +61,18 @@ class RobotAgent(Agent):
         else:
             self.kb = []
 
+        self.learner.reset()
+
     def accept(self, conn, barrier):
         self.conn = conn
         self.barrier = barrier
 
     def poll(self):
         return self.conn.poll()
+
+    def patch_model2(self):
+        os.system("patch \"{}\" < ./learning_core/model/empty-2.pddl.patch > /dev/null".format(self.model_file))
+        self.learner = Learner(self)
 
     def possible_states(self, msg):
         msg = Message.fromString(msg)
@@ -72,8 +90,8 @@ class RobotAgent(Agent):
             elif self.interaction == State.SecondInteraction:
                 return [State.CW1, State.CI1]
 
-    def guess_next_state(self, state, states= None):
-        if states == None:
+    def guess_next_state(self, states= None):
+        if states is None:
             states = [State.TR, State.RRC1, State.RRC2, State.CR, State.TW, State.RWC1, State.RWC2, State.CW1, State.CW2]
 
             if self.interaction == State.SecondInteraction:
@@ -82,12 +100,12 @@ class RobotAgent(Agent):
         if len(states) == 1:
             return states[0]
         else:
-            return random.choice(states)
+            return random.choice(self.learner.choose(states))
 
     def run(self):
         super().run()
         self.info("initial state: {}".format(self.initial_state))
-        self.state.value = (self.initial_state if self.initial_state != None else random.choice([State.TR, State.TIR])).value
+        self.state.value = (self.initial_state if self.initial_state is not None else random.choice([State.TR, State.TIR])).value
         self.states = []
         msg = None
         state = State.Start
@@ -99,6 +117,7 @@ class RobotAgent(Agent):
                 self.wait()
             except:
                 self.info("states: {}".format(self.states))
+                self.learner.learn()
                 break
 
             prev_state = state
@@ -116,13 +135,14 @@ class RobotAgent(Agent):
                         self.wait()
                     except:
                         self.info("states: {}".format(self.states))
+                        self.learner.learn()
                         break
 
                     self.debug("state: {}".format(state))
+                    self.learner.add_action(state)
                     self.states.append(state)
-                    prev_state = state
 
-                state = self.guess_next_state(prev_state, states)
+                state = self.guess_next_state(states)
                 self.debug("guessed state: {}".format(state))
                 self.state.value = state.value
                 self.notify()
@@ -131,38 +151,68 @@ class RobotAgent(Agent):
                     self.wait()
                 except:
                     self.info("states: {}".format(self.states))
+                    self.learner.learn()
                     break
+
+                self.learner.add_action(state)
 
                 if state in {State.RRC1, State.RIRC1}:
                     self.object_index_2 = None
                     self.word = None
                 elif state == State.TW:
                     self.word = None
+
+                self.learner.add_state(None, Message.fromString(msg))
+
+                if state in {State.CW1, State.CI1}:
+                    self.learner.add_state(None, None)
+                    msg = None
             elif state == State.TR:
                 self.TR()
+                self.learner.add_action(state)
+                self.learner.add_state(Message.Integer, Message.fromString(msg) if msg is not None else None)
             elif state == State.RRC2:
                 self.RRC2(msg)
+                self.learner.add_action(state)
+                self.learner.add_state(None, None)
                 msg = None
             elif state == State.CR:
                 self.CR()
+                self.learner.add_action(state)
+                self.learner.add_state(Message.Boolean, Message.fromString(msg) if msg is not None else None)
             elif state == State.RWC1:
                 self.RWC1(msg)
+                self.learner.add_action(state)
+                self.learner.add_state(Message.StringQuestion, None)
                 msg = None
             elif state == State.CW2:
                 self.CW2()
+                self.learner.add_action(state)
+                self.learner.add_state(None, Message.fromString(msg) if msg is not None else None)
             elif state == State.TIR:
                 self.TIR()
+                self.learner.add_action(state)
+                self.learner.add_state(Message.Integer, Message.fromString(msg) if msg is not None else None)
             elif state == State.RIRC2:
                 self.RIRC2(msg)
+                self.learner.add_action(state)
+                self.learner.add_state(None, None)
                 msg = None
             elif state == State.CIR:
                 self.CIR()
+                self.learner.add_action(state)
+                self.learner.add_state(Message.Boolean, Message.fromString(msg) if msg is not None else None)
             elif state == State.RIC1:
                 self.RIC1()
+                self.learner.add_action(state)
+                self.learner.add_state(Message.StringQuestion, Message.fromString(msg) if msg is not None else None)
             elif state == State.CI2:
                 self.CI2()
+                self.learner.add_action(state)
+                self.learner.add_state(None, Message.fromString(msg) if msg is not None else None)
             elif state == State.End:
                 self.info("states: {}".format(self.states))
+                self.learner.learn()
                 break
 
             self.debug("state: {}".format(state))
@@ -171,12 +221,12 @@ class RobotAgent(Agent):
             if state in {State.CW2, State.CI2}:
                 self.state.value = State.End.value
             elif state not in {State.RRC2, State.RIRC2}:
-                self.state.value = self.guess_next_state(state).value
+                self.state.value = self.guess_next_state().value
 
             self.debug("guessed state: {}".format(State(self.state.value)))
 
     def TR(self):
-        if self.object_index_1 == None:
+        if self.object_index_1 is None:
             self.object_index_1 = random.randrange(self.n_objects)
 
         self.object_index_2 = None
@@ -216,7 +266,7 @@ class RobotAgent(Agent):
         self.word = None
 
     def TIR(self):
-        if self.object_index_1 == None:
+        if self.object_index_1 is None:
             self.object_index_1 = random.randrange(self.n_objects)
 
         self.object_index_2 = None
@@ -236,7 +286,7 @@ class RobotAgent(Agent):
         self.send("True")
 
     def RIC1(self):
-        if self.word == None:
+        if self.word is None:
             self.word = random.choice(sorted({word for _, word in self.kb}))
 
         self.send(self.word + "?")

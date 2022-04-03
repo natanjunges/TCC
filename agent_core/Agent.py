@@ -40,13 +40,13 @@ class Agent:
         self.process.join()
 
     def reset(self, seed= None, noise= None, interaction= None):
-        if seed != None:
+        if seed is not None:
             self.seed = seed
 
-        if noise != None:
+        if noise is not None:
             self.noise = noise
 
-        if interaction != None:
+        if interaction is not None:
             self.interaction = interaction
 
         self.process = Process(target= self.run)

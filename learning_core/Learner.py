@@ -34,100 +34,107 @@ from copy import deepcopy
 
 class Learner:
     objects = [
-        TypedObject("object_index_1", "variable"),
-        TypedObject("object_index_2", "variable"),
-        TypedObject("object_index", "variable"),
-        TypedObject("word_1", "variable"),
-        TypedObject("word_2", "variable"),
+        TypedObject("object-index-1", "variable"),
+        TypedObject("object-index-2", "variable"),
+        TypedObject("object-index", "variable"),
+        TypedObject("word-1", "variable"),
+        TypedObject("word-2", "variable"),
         TypedObject("word", "variable"),
-        TypedObject("Integer", "message"),
-        TypedObject("String", "message"),
-        TypedObject("Boolean", "message"),
-        TypedObject("IntegerQuestion", "message"),
-        TypedObject("StringQuestion", "message")
+        TypedObject("integer", "message"),
+        TypedObject("string", "message"),
+        TypedObject("boolean", "message"),
+        TypedObject("integer-question", "message"),
+        TypedObject("string-question", "message")
     ]
     initial_state = State([
-        Literal("set", ["object_index_1"], False),
-        Literal("set", ["object_index_2"], False),
-        Literal("set", ["object_index"], False),
-        Literal("set", ["word_1"], False),
-        Literal("set", ["word_2"], False),
+        Literal("set", ["object-index-1"], False),
+        Literal("set", ["object-index-2"], False),
+        Literal("set", ["object-index"], False),
+        Literal("set", ["word-1"], False),
+        Literal("set", ["word-2"], False),
         Literal("set", ["word"], False),
-        Literal("sent_to_human", ["Integer"], False),
-        Literal("sent_to_human", ["String"], False),
-        Literal("sent_to_human", ["Boolean"], False),
-        Literal("sent_to_human", ["IntegerQuestion"], False),
-        Literal("sent_to_human", ["StringQuestion"], False),
-        Literal("sent_to_robot", ["Integer"], False),
-        Literal("sent_to_robot", ["String"], False),
-        Literal("sent_to_robot", ["Boolean"], False),
-        Literal("sent_to_robot", ["IntegerQuestion"], False),
-        Literal("sent_to_robot", ["StringQuestion"], False)
+        Literal("sent-to-human", ["integer"], False),
+        Literal("sent-to-human", ["string"], False),
+        Literal("sent-to-human", ["boolean"], False),
+        Literal("sent-to-human", ["integer-question"], False),
+        Literal("sent-to-human", ["string-question"], False),
+        Literal("sent-to-robot", ["integer"], False),
+        Literal("sent-to-robot", ["string"], False),
+        Literal("sent-to-robot", ["boolean"], False),
+        Literal("sent-to-robot", ["integer-question"], False),
+        Literal("sent-to-robot", ["string-question"], False)
     ], None)
 
-    def __init__(self, model_file):
+    def __init__(self, robot):
         self.builder = ObservationBuilder(self.objects, deepcopy(self.initial_state))
-        self.model_file = model_file
-        self.model = parse_model(model_file)
+        self.builder.observation.all_states_observed = False
+        self.robot = robot
+        self.model = parse_model(self.robot.model_file)
 
-    def add_state(self, robot, sent_msg, recv_msg):
+    def reset(self):
+        self.builder = ObservationBuilder(self.objects, deepcopy(self.initial_state))
+        self.builder.observation.all_states_observed = False
+
+    def add_state(self, sent_msg, recv_msg):
         self.builder.add_state(State([
-            Literal("set", ["object_index_1"], robot.object_index_1 != None),
-            Literal("set", ["object_index_2"], robot.object_index_2 != None),
-            Literal("set", ["word"], robot.word != None),
-            Literal("sent_to_human", ["Integer"], sent_msg == Message.Integer),
-            Literal("sent_to_human", ["String"], sent_msg == Message.String),
-            Literal("sent_to_human", ["Boolean"], sent_msg == Message.Boolean),
-            Literal("sent_to_human", ["IntegerQuestion"], sent_msg == Message.IntegerQuestion),
-            Literal("sent_to_human", ["StringQuestion"], sent_msg == Message.StringQuestion),
-            Literal("sent_to_robot", ["Integer"], recv_msg == Message.Integer),
-            Literal("sent_to_robot", ["String"], recv_msg == Message.String),
-            Literal("sent_to_robot", ["Boolean"], recv_msg == Message.Boolean),
-            Literal("sent_to_robot", ["IntegerQuestion"], recv_msg == Message.IntegerQuestion),
-            Literal("sent_to_robot", ["StringQuestion"], recv_msg == Message.StringQuestion)
+            Literal("set", ["object-index-1"], self.robot.object_index_1 is not None),
+            Literal("set", ["object-index-2"], self.robot.object_index_2 is not None),
+            Literal("set", ["word"], self.robot.word is not None),
+            Literal("sent-to-human", ["integer"], sent_msg == Message.Integer),
+            Literal("sent-to-human", ["string"], sent_msg == Message.String),
+            Literal("sent-to-human", ["boolean"], sent_msg == Message.Boolean),
+            Literal("sent-to-human", ["integer-question"], sent_msg == Message.IntegerQuestion),
+            Literal("sent-to-human", ["string-question"], sent_msg == Message.StringQuestion),
+            Literal("sent-to-robot", ["integer"], recv_msg == Message.Integer),
+            Literal("sent-to-robot", ["string"], recv_msg == Message.String),
+            Literal("sent-to-robot", ["boolean"], recv_msg == Message.Boolean),
+            Literal("sent-to-robot", ["integer-question"], recv_msg == Message.IntegerQuestion),
+            Literal("sent-to-robot", ["string-question"], recv_msg == Message.StringQuestion)
         ], None))
 
     def add_action(self, state):
         if state == AgentState.TR:
-            self.builder.add_action(Action("goto_TR", ["object_index_1", "object_index_2", "word", "Integer"]))
+            self.builder.add_action(Action("goto-tr", ["object-index-1", "object-index-2", "word", "integer"]))
         elif state == AgentState.RRC1:
-            self.builder.add_action(Action("goto_RRC1", ["object_index", "word_1", "word_2", "Integer", "IntegerQuestion"]))
+            self.builder.add_action(Action("goto-rrc1", ["object-index", "word-1", "word-2", "integer", "integer-question"]))
         elif state == AgentState.RRC2:
-            self.builder.add_action(Action("goto_RRC2", ["object_index_1", "object_index_2", "word", "IntegerQuestion"]))
+            self.builder.add_action(Action("goto-rrc2", ["object-index-1", "object-index-2", "word", "integer-question"]))
         elif state == AgentState.CR:
-            self.builder.add_action(Action("goto_CR", ["object_index_1", "object_index_2", "Boolean"]))
+            self.builder.add_action(Action("goto-cr", ["object-index-1", "object-index-2", "boolean"]))
         elif state == AgentState.TW:
-            self.builder.add_action(Action("goto_TW", ["word_1", "word_2", "String"]))
+            self.builder.add_action(Action("goto-tw", ["word-1", "word-2", "string"]))
         elif state == AgentState.RWC1:
-            self.builder.add_action(Action("goto_RWC1", ["word", "String", "StringQuestion"]))
+            self.builder.add_action(Action("goto-rwc1", ["word", "string", "string-question"]))
         elif state == AgentState.RWC2:
-            self.builder.add_action(Action("goto_RWC2", ["word_1", "word_2", "StringQuestion"]))
+            self.builder.add_action(Action("goto-rwc2", ["word-1", "word-2", "string-question"]))
         elif state == AgentState.CW1:
-            self.builder.add_action(Action("goto_CW1", ["word_1", "word_2", "Boolean"]))
+            self.builder.add_action(Action("goto-cw1", ["word-1", "word-2", "boolean"]))
         elif state == AgentState.CW2:
-            self.builder.add_action(Action("goto_CW2", ["object_index_1", "object_index_2", "word"]))
+            self.builder.add_action(Action("goto-cw2", ["object-index-1", "object-index-2", "word"]))
         elif state == AgentState.TIR:
-            self.builder.add_action(Action("goto_TIR", ["object_index_1", "object_index_2", "word", "Integer"]))
+            self.builder.add_action(Action("goto-tir", ["object-index-1", "object-index-2", "word", "integer"]))
         elif state == AgentState.RIRC1:
-            self.builder.add_action(Action("goto_RIRC1", ["object_index", "word_1", "word_2", "Integer", "IntegerQuestion"]))
+            self.builder.add_action(Action("goto-rirc1", ["object-index", "word-1", "word-2", "integer", "integer-question"]))
         elif state == AgentState.RIRC2:
-            self.builder.add_action(Action("goto_RIRC2", ["object_index_1", "object_index_2", "word", "IntegerQuestion"]))
+            self.builder.add_action(Action("goto-rirc2", ["object-index-1", "object-index-2", "word", "integer-question"]))
         elif state == AgentState.CIR:
-            self.builder.add_action(Action("goto_CIR", ["object_index_1", "object_index_2", "Boolean"]))
+            self.builder.add_action(Action("goto-cir", ["object-index-1", "object-index-2", "boolean"]))
         elif state == AgentState.RIC1:
-            self.builder.add_action(Action("goto_RIC1", ["word", "String", "StringQuestion"]))
+            self.builder.add_action(Action("goto-ric1", ["word", "string", "string-question"]))
         elif state == AgentState.RIC2:
-            self.builder.add_action(Action("goto_RIC2", ["object_index", "word_1", "word_2", "StringQuestion"]))
+            self.builder.add_action(Action("goto-ric2", ["object-index", "word-1", "word-2", "string-question"]))
         elif state == AgentState.CI1:
-            self.builder.add_action(Action("goto_CI1", ["object_index", "word_2", "Boolean"]))
+            self.builder.add_action(Action("goto-ci1", ["object-index", "word-2", "boolean"]))
         elif state == AgentState.CI2:
-            self.builder.add_action(Action("goto_CI2", ["object_index_1", "object_index_2", "word"]))
+            self.builder.add_action(Action("goto-ci2", ["object-index-1", "object-index-2", "word"]))
 
-    def choose(self, current_state, possible_states):
-        pass
+    def choose(self, possible_states):
+        return possible_states
 
     def learn(self):
         task = LearningTask(self.model, [self.builder.observation])
         solution = task.learn()
-        self.model = solution.learned_model
-        self.model.to_file(self.model_file)
+
+        if solution.solution_found:
+            self.model = solution.learned_model
+            self.model.to_file(self.robot.model_file)

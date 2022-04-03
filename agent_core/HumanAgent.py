@@ -143,23 +143,23 @@ class HumanAgent(Agent):
         elif next_state in {State.RRC1, State.RIRC1}:
             return state in {State.TR, State.TIR}
         elif next_state in {State.RRC2, State.RIRC2}:
-            return state in {State.RRC1, State.RIRC1} and self.object_index_1 != None
+            return state in {State.RRC1, State.RIRC1} and self.object_index_1 is not None
         elif next_state in {State.CR, State.CIR}:
-            return self.object_index_1 != None and self.object_index_2 != None and self.object_index_1 == self.object_index_2
+            return self.object_index_1 is not None and self.object_index_2 is not None and self.object_index_1 == self.object_index_2
         elif next_state == State.TW:
-            return self.object_index != None
+            return self.object_index is not None
         elif next_state == State.RWC1:
             return state == State.TW
         elif next_state == State.RWC2:
-            return state == State.RWC1 and self.word_1 != None
+            return state == State.RWC1 and self.word_1 is not None
         elif next_state == State.CW1:
-            return self.word_1 != None and self.word_2 != None and self.word_1 == self.word_2
+            return self.word_1 is not None and self.word_2 is not None and self.word_1 == self.word_2
         elif next_state in {State.CW2, State.CI2}:
-            return self.object_index_1 != None and self.word != None
+            return self.object_index_1 is not None and self.word is not None
         elif next_state == State.RIC2:
-            return state == State.RIC1 and self.object_index != None
+            return state == State.RIC1 and self.object_index is not None
         elif next_state == State.CI1:
-            return self.word_2 != None and self.object_index != None and self.word_2 in self.objects[self.object_index]
+            return self.word_2 is not None and self.object_index is not None and self.word_2 in self.objects[self.object_index]
 
     def run_state(self):
         if self.state == State.RRC1:
@@ -372,7 +372,7 @@ class HumanAgent(Agent):
 
                 prev_state = self.sync_state(prev_state)
 
-                if prev_state != None:
+                if prev_state is not None:
                     state = self.state
                 else:
                     self.debug("states: {}".format(self.states))
@@ -386,7 +386,7 @@ class HumanAgent(Agent):
                     self.state = state
                     self.debug("state: {}".format(self.state))
 
-                    if self.initial_state == None:
+                    if self.initial_state is None:
                         self.initial_state = self.state
 
                     if self.state in {State.RRC1, State.TW, State.RWC2, State.CW1, State.RIRC1, State.RIC2, State.CI1}:
@@ -396,7 +396,7 @@ class HumanAgent(Agent):
 
                         prev_state = self.sync_state(prev_state)
 
-                        if prev_state != None:
+                        if prev_state is not None:
                             state = self.state
                         else:
                             self.debug("states: {}".format(self.states))
@@ -428,7 +428,7 @@ class HumanAgent(Agent):
         self.send("{}?".format(self.object_index))
 
     def TW(self):
-        if self.word_1 == None:
+        if self.word_1 is None:
             self.word_1 = random.choice(self.objects[self.object_index])
 
         self.word = None
