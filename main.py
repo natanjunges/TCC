@@ -35,10 +35,16 @@ if __name__ == "__main__":
     #interaction = State.FirstInteraction
     interaction = State.SecondInteraction
     noise = 0.1
-    robot = RobotAgent(id, path_prefix, seed, noise, interaction, len(objects))
+    batch_size = 10
+    robot = RobotAgent(id, path_prefix, seed, noise, interaction, len(objects), batch_size)
     human = HumanAgent(id, path_prefix, seed, noise, interaction, objects)
     human.connect(robot)
-    robot.start()
-    human.start()
-    robot.join()
-    human.join()
+
+    for _ in range(100 * batch_size):
+        robot.start()
+        human.start()
+        robot.join()
+        human.join()
+        seed = random.randrange(sys.maxsize)
+        robot.reset(seed= seed)
+        human.reset(seed= seed)

@@ -24,6 +24,7 @@
 # grant you additional permission to convey the resulting work.
 
 from .ObservationBuilder import ObservationBuilder
+from .observation_parsing import parse_observation
 from agent_core.Message import Message
 from agent_core.State import State as AgentState
 from meta_planning import LearningTask
@@ -31,6 +32,8 @@ from meta_planning.pddl import TypedObject, Literal, Action
 from meta_planning.observations import State
 from meta_planning.parsers import parse_model
 from copy import deepcopy
+import os
+import os.path
 
 class Learner:
     objects = [
@@ -68,12 +71,21 @@ class Learner:
     def __init__(self, robot):
         self.builder = ObservationBuilder(self.objects, deepcopy(self.initial_state))
         self.builder.observation.all_states_observed = False
+        self.builder.observation.all_actions_observed = False
         self.robot = robot
+        self.counter = 1
         self.model = parse_model(self.robot.model_file)
 
     def reset(self):
         self.builder = ObservationBuilder(self.objects, deepcopy(self.initial_state))
         self.builder.observation.all_states_observed = False
+        self.builder.observation.all_actions_observed = False
+        self.counter += 1
+
+        if self.counter > self.robot.batch_size:
+            self.counter = 1
+
+        self.model = parse_model(self.robot.model_file)
 
     def add_state(self, sent_msg, recv_msg):
         self.builder.add_state(State([
@@ -132,9 +144,26 @@ class Learner:
         return possible_states
 
     def learn(self):
-        task = LearningTask(self.model, [self.builder.observation])
-        solution = task.learn()
+        if self.counter < self.robot.batch_size:
+            file_name = "{}_{}.pddl".format(self.robot.obs_file, self.counter)
 
-        if solution.solution_found:
-            self.model = solution.learned_model
-            self.model.to_file(self.robot.model_file)
+            if not os.path.isdir(os.path.dirname(file_name)):
+                os.mkdir(os.path.dirname(file_name))
+
+            with open(file_name, "w") as file:
+                file.write(str(self.builder.observation))
+        else:
+            observations = []
+
+            for i in range(1, self.robot.batch_size):
+                observation = parse_observation("{}_{}.pddl".format(self.robot.obs_file, i), self.model)
+                observation.all_states_observed = False
+                observation.all_actions_observed = False
+                observations.append(observation)
+
+            observations.append(self.builder.observation)
+            task = LearningTask(self.model, observations)
+            solution = task.learn()
+
+            if solution.solution_found:
+                solution.learned_model.to_file(self.robot.model_file)
