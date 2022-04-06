@@ -72,6 +72,7 @@ class Learner:
         self.builder = ObservationBuilder(self.objects, deepcopy(self.initial_state))
         self.builder.observation.all_states_observed = False
         self.builder.observation.all_actions_observed = False
+        self.builder.observation.bound = False
         self.robot = robot
         self.counter = 1
         self.model = parse_model(self.robot.model_file)
@@ -80,6 +81,7 @@ class Learner:
         self.builder = ObservationBuilder(self.objects, deepcopy(self.initial_state))
         self.builder.observation.all_states_observed = False
         self.builder.observation.all_actions_observed = False
+        self.builder.observation.bound = False
         self.counter += 1
 
         if self.counter > self.robot.batch_size:
@@ -159,6 +161,7 @@ class Learner:
                 observation = parse_observation("{}_{}.pddl".format(self.robot.obs_file, i), self.model)
                 observation.all_states_observed = False
                 observation.all_actions_observed = False
+                observation.bound = False
                 observations.append(observation)
 
             observations.append(self.builder.observation)
