@@ -22,6 +22,7 @@ from multiprocessing import Pipe, Barrier
 import json
 import os.path
 from datetime import datetime
+import logging
 
 class HumanAgent(Agent):
     def __init__(self, id, path_prefix, seed, noise, interaction, objects):
@@ -221,14 +222,20 @@ class HumanAgent(Agent):
 
         if os.path.isfile(self.log_file):
             with open(self.log_file, "r") as file:
-                log = json.load(file)
+                for line in file:
+                    interaction = json.loads(line)
 
-            for interaction in log:
-                if interaction["interaction"] == ("FirstInteraction" if self.interaction == State.FirstInteraction else "SecondInteraction"):
-                    merge(transitions, [[State[transition[0]], State[transition[1]]] for transition in interaction["new_transitions"]])
+                    if interaction["interaction"] == ("FirstInteraction" if self.interaction == State.FirstInteraction else "SecondInteraction"):
+                        merge(transitions, [[State[transition[0]], State[transition[1]]] for transition in interaction["new_transitions"]])
+
+                        if len(transitions) >= (21 if self.interaction == State.FirstInteraction else 68):
+                            break
 
         sub(new_transitions, transitions)
-        self.debug("visited transitions: {}".format(transitions))
+
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.debug("visited transitions: {}".format(transitions))
+
         return (new_transitions, (0.0076 if self.interaction == State.FirstInteraction else 0.0023) * (len(transitions) + len(new_transitions)) + 0.84)
 
     def update_transitions(self, state, condition, legal):
@@ -247,12 +254,6 @@ class HumanAgent(Agent):
         self.save_log(state, legal, d[0], score)
 
     def save_log(self, state, legal, transitions, score):
-        if os.path.isfile(self.log_file):
-            with open(self.log_file, "r") as file:
-                log = json.load(file)
-        else:
-            log = []
-
         interaction = {
             "timestamp": datetime.utcnow().isoformat(" "),
             "seed": self.seed,
@@ -265,16 +266,16 @@ class HumanAgent(Agent):
             "new_transitions": [[str(transition[0]), str(transition[1])] for transition in transitions],
             "score": score
         }
-        log.append(interaction)
 
-        with open(self.log_file, "w") as file:
-            json.dump(log, file)
+        with open(self.log_file, "a") as file:
+            file.write(json.dumps(interaction) + "\n")
 
-        self.info("last state: {}".format(state))
-        self.info("legal transition: {}".format(legal))
-        self.info("number of transitions: {}".format(self.state_transitions))
-        self.info("new transitions: {}".format(transitions))
-        self.info("score: {}".format(score))
+        if self.logger.isEnabledFor(logging.INFO):
+            self.info("last state: {}".format(state))
+            self.info("legal transition: {}".format(legal))
+            self.info("number of transitions: {}".format(self.state_transitions))
+            self.info("new transitions: {}".format(transitions))
+            self.info("score: {}".format(score))
 
     def get_transitions(self):
         i = 0
@@ -340,7 +341,9 @@ class HumanAgent(Agent):
             state = State(self.robot_state.value)
 
             if not self.update_transitions(state, self.state not in {State.CW2, State.CI2}, self.can_be_next(self.state, state)):
-                self.debug("states: {}".format(self.states))
+                if self.logger.isEnabledFor(logging.DEBUG):
+                    self.debug("states: {}".format(self.states))
+
                 break
 
             if self.state in {State.TR, State.CR, State.RWC1, State.CW2, State.TIR, State.RIC1, State.CI2}:
@@ -367,7 +370,9 @@ class HumanAgent(Agent):
                 self.debug("state: {}".format(self.state))
 
                 if not self.run_state():
-                    self.debug("states: {}".format(self.states))
+                    if self.logger.isEnabledFor(logging.DEBUG):
+                        self.debug("states: {}".format(self.states))
+
                     break
 
                 prev_state = self.sync_state(prev_state)
@@ -375,7 +380,9 @@ class HumanAgent(Agent):
                 if prev_state is not None:
                     state = self.state
                 else:
-                    self.debug("states: {}".format(self.states))
+                    if self.logger.isEnabledFor(logging.DEBUG):
+                        self.debug("states: {}".format(self.states))
+
                     break
             else:
                 if self.state in {State.RRC2, State.RIRC2}:
@@ -391,7 +398,9 @@ class HumanAgent(Agent):
 
                     if self.state in {State.RRC1, State.TW, State.RWC2, State.CW1, State.RIRC1, State.RIC2, State.CI1}:
                         if not self.run_state():
-                            self.debug("states: {}".format(self.states))
+                            if self.logger.isEnabledFor(logging.DEBUG):
+                                self.debug("states: {}".format(self.states))
+
                             break
 
                         prev_state = self.sync_state(prev_state)
@@ -399,7 +408,9 @@ class HumanAgent(Agent):
                         if prev_state is not None:
                             state = self.state
                         else:
-                            self.debug("states: {}".format(self.states))
+                            if self.logger.isEnabledFor(logging.DEBUG):
+                                self.debug("states: {}".format(self.states))
+
                             break
                     else:
                         self.states.append(state)
@@ -409,7 +420,10 @@ class HumanAgent(Agent):
                             self.save_log(self.state, True, d[0], d[1])
                 else:
                     self.kill_robot(state, False, True)
-                    self.debug("states: {}".format(self.states))
+
+                    if self.logger.isEnabledFor(logging.DEBUG):
+                        self.debug("states: {}".format(self.states))
+
                     break
 
             self.notify()

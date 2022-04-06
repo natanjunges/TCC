@@ -25,6 +25,7 @@ import os.path
 import json
 from shutil import copyfile
 import os
+import logging
 
 class RobotAgent(Agent):
     def __init__(self, id, path_prefix, seed, noise, interaction, n_objects, batch_size, initial_state= None):
@@ -119,7 +120,9 @@ class RobotAgent(Agent):
             try:
                 self.wait()
             except:
-                self.info("states: {}".format(self.states))
+                if self.logger.isEnabledFor(logging.INFO):
+                    self.info("states: {}".format(self.states))
+
                 self.learner.learn()
                 break
 
@@ -129,7 +132,9 @@ class RobotAgent(Agent):
             if self.poll():
                 msg = self.recv()
                 states = self.possible_states(msg)
-                self.debug("possible states: {}".format(states))
+
+                if self.logger.isEnabledFor(logging.DEBUG):
+                    self.debug("possible states: {}".format(states))
 
                 if (State.TW in states and prev_state != State.CR or State.CW1 in states) and state in {State.RWC2, State.RIC2}:
                     self.notify()
@@ -137,7 +142,9 @@ class RobotAgent(Agent):
                     try:
                         self.wait()
                     except:
-                        self.info("states: {}".format(self.states))
+                        if self.logger.isEnabledFor(logging.INFO):
+                            self.info("states: {}".format(self.states))
+
                         self.learner.learn()
                         break
 
@@ -153,7 +160,9 @@ class RobotAgent(Agent):
                 try:
                     self.wait()
                 except:
-                    self.info("states: {}".format(self.states))
+                    if self.logger.isEnabledFor(logging.INFO):
+                        self.info("states: {}".format(self.states))
+
                     self.learner.learn()
                     break
 
@@ -214,7 +223,9 @@ class RobotAgent(Agent):
                 self.learner.add_action(state)
                 self.learner.add_state(None, Message.fromString(msg) if msg is not None else None)
             elif state == State.End:
-                self.info("states: {}".format(self.states))
+                if self.logger.isEnabledFor(logging.INFO):
+                    self.info("states: {}".format(self.states))
+
                 self.learner.learn()
                 break
 
@@ -259,7 +270,8 @@ class RobotAgent(Agent):
 
     def CW2(self):
         if insert(self.kb, [self.object_index_1, self.word]):
-            self.debug("kb: {}".format(self.kb))
+            if self.logger.isEnabledFor(logging.DEBUG):
+                self.debug("kb: {}".format(self.kb))
 
             with open(self.kb_file, "w") as file:
                 json.dump(self.kb, file)
@@ -296,7 +308,8 @@ class RobotAgent(Agent):
 
     def CI2(self):
         if insert(self.kb, [self.object_index_1, self.word]):
-            self.debug("kb: {}".format(self.kb))
+            if self.logger.isEnabledFor(logging.DEBUG):
+                self.debug("kb: {}".format(self.kb))
 
             with open(self.kb_file, "w") as file:
                 json.dump(self.kb, file)
