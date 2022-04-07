@@ -46,7 +46,7 @@ class HumanAgent(Agent):
         self.log(self.SYNCHRONIZATION, "aborted")
 
     def can_be_next(self, state, next_state):
-        # Legal state transitions for FirstInteraction (21):
+        # Legal state transitions for FirstInteraction (22):
         # TR, RRC1
         # RRC1, TR
         # RRC1, RRC2
@@ -58,6 +58,7 @@ class HumanAgent(Agent):
         # TW, CR
         # TW, TW
         # TW, RWC1
+        # TW, CW2
         # RWC1, TW
         # RWC1, RWC2
         # RWC1, CW1
@@ -68,7 +69,7 @@ class HumanAgent(Agent):
         # CW1, TW
         # CW1, CW1
         # CW1, CW2
-        # Legal state transitions for SecondInteraction (68):
+        # Legal state transitions for SecondInteraction (70):
         # TR, RRC1
         # TR, RIRC1
         # RRC1, TR
@@ -84,9 +85,11 @@ class HumanAgent(Agent):
         # TW, CR
         # TW, TW
         # TW, RWC1
+        # TW, CW2
         # TW, TIR
         # TW, CIR
         # TW, RIC1
+        # TW, CI2
         # RWC1, TW
         # RWC1, RWC2
         # RWC1, CW1
@@ -138,28 +141,34 @@ class HumanAgent(Agent):
         # CI1, CI1
         # CI1, CI2
 
-        if state in {State.RRC2, State.RIRC2} or next_state in {State.TR, State.TIR, State.RIC1}:
-            return True
+        if next_state == State.TR:
+            return state in {State.RRC1, State.RRC2, State.TW, State.CW1, State.RIRC1, State.CIR, State.CI1}
         elif next_state in {State.RRC1, State.RIRC1}:
             return state in {State.TR, State.TIR}
         elif next_state in {State.RRC2, State.RIRC2}:
             return state in {State.RRC1, State.RIRC1} and self.object_index_1 is not None
-        elif next_state in {State.CR, State.CIR}:
-            return self.object_index_1 is not None and self.object_index_2 is not None and self.object_index_1 == self.object_index_2
+        elif next_state == State.CR:
+            return state in {State.RRC2, State.TW, State.CW1, State.CIR, State.CI1} and self.object_index_1 is not None and self.object_index_2 is not None and self.object_index_1 == self.object_index_2
         elif next_state == State.TW:
-            return self.object_index is not None
+            return state in {State.RRC1, State.CR, State.TW, State.RWC1, State.RWC2, State.CW1, State.RIRC1, State.CIR, State.RIC1, State.RIC2, State.CI1} and self.object_index is not None
         elif next_state == State.RWC1:
             return state == State.TW
         elif next_state == State.RWC2:
             return state == State.RWC1 and self.word_1 is not None
         elif next_state == State.CW1:
-            return self.word_1 is not None and self.word_2 is not None and self.word_1 == self.word_2
+            return state in {State.RWC1, State.RWC2, State.CW1, State.CIR, State.CI1} and self.word_1 is not None and self.word_2 is not None and self.word_1 == self.word_2
         elif next_state in {State.CW2, State.CI2}:
-            return self.object_index_1 is not None and self.word is not None
+            return state in {State.TW, State.CW1, State.CIR, State.CI1} and self.object_index_1 is not None and self.word is not None
+        elif next_state == State.TIR:
+            return state in {State.RRC1, State.TW, State.CW1, State.RIRC1, State.RIRC2, State.CIR, State.CI1}
+        elif next_state == State.CIR:
+            return state in {State.TW, State.CW1, State.RIRC2, State.CIR, State.CI1} and self.object_index_1 is not None and self.object_index_2 is not None and self.object_index_1 == self.object_index_2
+        elif next_state == State.RIC1:
+            return state in {State.RRC1, State.TW, State.CW1, State.RIRC1, State.CIR, State.CI1}
         elif next_state == State.RIC2:
             return state == State.RIC1 and self.object_index is not None
         elif next_state == State.CI1:
-            return self.word_2 is not None and self.object_index is not None and self.word_2 in self.objects[self.object_index]
+            return state in {State.CW1, State.CIR, State.RIC1, State.RIC2, State.CI1} and self.object_index is not None and self.word_2 is not None and self.word_2 in self.objects[self.object_index]
 
     def run_state(self):
         if self.state == State.RRC1:
@@ -227,11 +236,11 @@ class HumanAgent(Agent):
                     if interaction["interaction"] == ("FirstInteraction" if self.interaction == State.FirstInteraction else "SecondInteraction"):
                         merge(transitions, [[State[transition[0]], State[transition[1]]] for transition in interaction["new_transitions"]])
 
-                        if len(transitions) >= (21 if self.interaction == State.FirstInteraction else 68):
+                        if len(transitions) >= (22 if self.interaction == State.FirstInteraction else 70):
                             break
 
         sub(new_transitions, transitions)
-        return (new_transitions, (0.0076 if self.interaction == State.FirstInteraction else 0.0023) * (len(transitions) + len(new_transitions)) + 0.84)
+        return (new_transitions, (0.0072 if self.interaction == State.FirstInteraction else 0.0022) * (len(transitions) + len(new_transitions)) + 0.84)
 
     def update_transitions(self, state, condition, legal):
         self.state_transitions += 1
@@ -284,8 +293,7 @@ class HumanAgent(Agent):
         return transitions
 
     def sync_state(self, prev_state):
-        self.notify()
-        self.wait()
+        self.notify_wait()
         state = State(self.robot_state.value)
 
         if self.can_be_next(prev_state, state):
@@ -295,8 +303,7 @@ class HumanAgent(Agent):
 
             if self.state in {State.RWC2, State.RIC2}:
                 prev_state = state
-                self.notify()
-                self.wait()
+                self.notify_wait()
                 state = State(self.robot_state.value)
                 cbn = self.can_be_next(prev_state, state)
 
@@ -325,10 +332,9 @@ class HumanAgent(Agent):
         self.initial_state = None
         self.states = []
         state = State.Start
+        self.wait()
 
         while True:
-            self.wait()
-
             if self.state in {State.CR, State.CIR}:
                 self.recv()
 
@@ -392,12 +398,7 @@ class HumanAgent(Agent):
                         self.initial_state = self.state
 
                     if self.state in {State.RRC1, State.TW, State.RWC2, State.CW1, State.RIRC1, State.RIC2, State.CI1}:
-                        if not self.run_state():
-                            if self.logger.isEnabledFor(self.STATES):
-                                self.log(self.STATES, "states: {}".format(self.states))
-
-                            break
-
+                        self.run_state()
                         prev_state = self.sync_state(prev_state)
 
                         if prev_state is not None:
@@ -421,7 +422,7 @@ class HumanAgent(Agent):
 
                     break
 
-            self.notify()
+            self.notify_wait()
 
     def RRC1(self):
         self.object_index = int(self.recv())

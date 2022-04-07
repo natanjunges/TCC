@@ -106,20 +106,21 @@ class RobotAgent(Agent):
 
     def run(self):
         super().run()
-        self.log(self.SIMULATION, "seed: {}".format(self.seed))
-        self.log(self.SIMULATION, "noise: {}".format(self.noise))
-        self.log(self.SIMULATION, "interaction: " + ("FirstInteraction" if self.interaction == State.FirstInteraction else "SecondInteraction"))
-        self.log(self.SIMULATION, "initial state: {}".format(self.initial_state))
+
+        if self.logger.isEnabledFor(self.SIMULATION):
+            self.log(self.SIMULATION, "seed: {}".format(self.seed))
+            self.log(self.SIMULATION, "noise: {}".format(self.noise))
+            self.log(self.SIMULATION, "interaction: " + ("FirstInteraction" if self.interaction == State.FirstInteraction else "SecondInteraction"))
+            self.log(self.SIMULATION, "initial state: {}".format(self.initial_state))
+
         self.state.value = (self.initial_state if self.initial_state is not None else random.choice([State.TR, State.TIR])).value
         self.states = []
         msg = None
         state = State.Start
 
         while True:
-            self.notify()
-
             try:
-                self.wait()
+                self.notify_wait()
             except:
                 if self.logger.isEnabledFor(self.STATES):
                     self.log(self.STATES, "states: {}".format(self.states))
@@ -138,10 +139,8 @@ class RobotAgent(Agent):
                     self.log(self.STATES, "possible states: {}".format(states))
 
                 if (State.TW in states and prev_state != State.CR or State.CW1 in states) and state in {State.RWC2, State.RIC2}:
-                    self.notify()
-
                     try:
-                        self.wait()
+                        self.notify_wait()
                     except:
                         if self.logger.isEnabledFor(self.STATES):
                             self.log(self.STATES, "states: {}".format(self.states))
@@ -156,10 +155,8 @@ class RobotAgent(Agent):
                 state = self.guess_next_state(states)
                 self.log(self.STATES, "guessed state: {}".format(state))
                 self.state.value = state.value
-                self.notify()
-
                 try:
-                    self.wait()
+                    self.notify_wait()
                 except:
                     if self.logger.isEnabledFor(self.STATES):
                         self.log(self.STATES, "states: {}".format(self.states))

@@ -21,6 +21,7 @@ import sys
 import random
 
 class Agent:
+    NONE= 30
     SIMULATION= 25
     SENT_MESSAGES= 20
     RECEIVED_MESSAGES= 18
@@ -78,6 +79,10 @@ class Agent:
         self.log(self.SYNCHRONIZATION, "notifying")
         self.barrier.wait()
         self.log(self.SYNCHRONIZATION, "notified")
+
+    def notify_wait(self):
+        self.notify()
+        self.wait()
 
     def run(self):
         random.seed(self.seed)
