@@ -22,7 +22,6 @@ from multiprocessing import Pipe, Barrier
 import json
 import os.path
 from datetime import datetime
-import logging
 
 class HumanAgent(Agent):
     def __init__(self, id, path_prefix, seed, noise, interaction, objects):
@@ -44,7 +43,7 @@ class HumanAgent(Agent):
 
     def abort(self):
         self.barrier.abort()
-        self.info("aborted")
+        self.log(self.SYNCHRONIZATION, "aborted")
 
     def can_be_next(self, state, next_state):
         # Legal state transitions for FirstInteraction (21):
@@ -169,7 +168,7 @@ class HumanAgent(Agent):
             self.TW()
         elif self.state == State.RWC2:
             self.RWC2()
-            self.debug("state: {}".format(self.state))
+            self.log(self.STATES, "state: {}".format(self.state))
 
             if self.state == State.TW:
                 self.TW()
@@ -181,7 +180,7 @@ class HumanAgent(Agent):
             self.RIRC1()
         elif self.state == State.RIC2:
             self.RIC2()
-            self.debug("state: {}".format(self.state))
+            self.log(self.STATES, "state: {}".format(self.state))
 
             if self.state == State.TW:
                 self.TW()
@@ -232,10 +231,6 @@ class HumanAgent(Agent):
                             break
 
         sub(new_transitions, transitions)
-
-        if self.logger.isEnabledFor(logging.DEBUG):
-            self.debug("visited transitions: {}".format(transitions))
-
         return (new_transitions, (0.0076 if self.interaction == State.FirstInteraction else 0.0023) * (len(transitions) + len(new_transitions)) + 0.84)
 
     def update_transitions(self, state, condition, legal):
@@ -270,12 +265,12 @@ class HumanAgent(Agent):
         with open(self.log_file, "a") as file:
             file.write(json.dumps(interaction) + "\n")
 
-        if self.logger.isEnabledFor(logging.INFO):
-            self.info("last state: {}".format(state))
-            self.info("legal transition: {}".format(legal))
-            self.info("number of transitions: {}".format(self.state_transitions))
-            self.info("new transitions: {}".format(transitions))
-            self.info("score: {}".format(score))
+        if self.logger.isEnabledFor(self.SIMULATION):
+            self.log(self.SIMULATION, "last state: {}".format(state))
+            self.log(self.SIMULATION, "legal transition: {}".format(legal))
+            self.log(self.SIMULATION, "number of transitions: {}".format(self.state_transitions))
+            self.log(self.SIMULATION, "new transitions: {}".format(transitions))
+            self.log(self.SIMULATION, "score: {}".format(score))
 
     def get_transitions(self):
         i = 0
@@ -296,7 +291,7 @@ class HumanAgent(Agent):
         if self.can_be_next(prev_state, state):
             self.state = state
             self.states.append(state)
-            self.debug("synced state: {}".format(self.state))
+            self.log(self.STATES, "synced state: {}".format(self.state))
 
             if self.state in {State.RWC2, State.RIC2}:
                 prev_state = state
@@ -311,7 +306,7 @@ class HumanAgent(Agent):
                 if cbn:
                     self.state = state
                     self.states.append(state)
-                    self.debug("synced state: {}".format(self.state))
+                    self.log(self.STATES, "synced state: {}".format(self.state))
                 else:
                     self.kill_robot(state, False, True)
                     return None
@@ -341,8 +336,8 @@ class HumanAgent(Agent):
             state = State(self.robot_state.value)
 
             if not self.update_transitions(state, self.state not in {State.CW2, State.CI2}, self.can_be_next(self.state, state)):
-                if self.logger.isEnabledFor(logging.DEBUG):
-                    self.debug("states: {}".format(self.states))
+                if self.logger.isEnabledFor(self.STATES):
+                    self.log(self.STATES, "states: {}".format(self.states))
 
                 break
 
@@ -367,11 +362,11 @@ class HumanAgent(Agent):
                     self.word = None
                     self.state = State.End
 
-                self.debug("state: {}".format(self.state))
+                self.log(self.STATES, "state: {}".format(self.state))
 
                 if not self.run_state():
-                    if self.logger.isEnabledFor(logging.DEBUG):
-                        self.debug("states: {}".format(self.states))
+                    if self.logger.isEnabledFor(self.STATES):
+                        self.log(self.STATES, "states: {}".format(self.states))
 
                     break
 
@@ -380,8 +375,8 @@ class HumanAgent(Agent):
                 if prev_state is not None:
                     state = self.state
                 else:
-                    if self.logger.isEnabledFor(logging.DEBUG):
-                        self.debug("states: {}".format(self.states))
+                    if self.logger.isEnabledFor(self.STATES):
+                        self.log(self.STATES, "states: {}".format(self.states))
 
                     break
             else:
@@ -391,15 +386,15 @@ class HumanAgent(Agent):
 
                 if self.can_be_next(self.state, state):
                     self.state = state
-                    self.debug("state: {}".format(self.state))
+                    self.log(self.STATES, "state: {}".format(self.state))
 
                     if self.initial_state is None:
                         self.initial_state = self.state
 
                     if self.state in {State.RRC1, State.TW, State.RWC2, State.CW1, State.RIRC1, State.RIC2, State.CI1}:
                         if not self.run_state():
-                            if self.logger.isEnabledFor(logging.DEBUG):
-                                self.debug("states: {}".format(self.states))
+                            if self.logger.isEnabledFor(self.STATES):
+                                self.log(self.STATES, "states: {}".format(self.states))
 
                             break
 
@@ -408,8 +403,8 @@ class HumanAgent(Agent):
                         if prev_state is not None:
                             state = self.state
                         else:
-                            if self.logger.isEnabledFor(logging.DEBUG):
-                                self.debug("states: {}".format(self.states))
+                            if self.logger.isEnabledFor(self.STATES):
+                                self.log(self.STATES, "states: {}".format(self.states))
 
                             break
                     else:
@@ -421,8 +416,8 @@ class HumanAgent(Agent):
                 else:
                     self.kill_robot(state, False, True)
 
-                    if self.logger.isEnabledFor(logging.DEBUG):
-                        self.debug("states: {}".format(self.states))
+                    if self.logger.isEnabledFor(self.STATES):
+                        self.log(self.STATES, "states: {}".format(self.states))
 
                     break
 

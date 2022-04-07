@@ -25,9 +25,10 @@ import os.path
 import json
 from shutil import copyfile
 import os
-import logging
 
 class RobotAgent(Agent):
+    KB= 15
+
     def __init__(self, id, path_prefix, seed, noise, interaction, n_objects, initial_state= None):
         super().__init__(id, path_prefix, seed, noise, interaction)
         self.n_objects = n_objects
@@ -105,7 +106,10 @@ class RobotAgent(Agent):
 
     def run(self):
         super().run()
-        self.info("initial state: {}".format(self.initial_state))
+        self.log(self.SIMULATION, "seed: {}".format(self.seed))
+        self.log(self.SIMULATION, "noise: {}".format(self.noise))
+        self.log(self.SIMULATION, "interaction: " + ("FirstInteraction" if self.interaction == State.FirstInteraction else "SecondInteraction"))
+        self.log(self.SIMULATION, "initial state: {}".format(self.initial_state))
         self.state.value = (self.initial_state if self.initial_state is not None else random.choice([State.TR, State.TIR])).value
         self.states = []
         msg = None
@@ -117,8 +121,8 @@ class RobotAgent(Agent):
             try:
                 self.wait()
             except:
-                if self.logger.isEnabledFor(logging.INFO):
-                    self.info("states: {}".format(self.states))
+                if self.logger.isEnabledFor(self.STATES):
+                    self.log(self.STATES, "states: {}".format(self.states))
 
                 self.learner.learn()
                 break
@@ -130,8 +134,8 @@ class RobotAgent(Agent):
                 msg = self.recv()
                 states = self.possible_states(msg)
 
-                if self.logger.isEnabledFor(logging.DEBUG):
-                    self.debug("possible states: {}".format(states))
+                if self.logger.isEnabledFor(self.STATES):
+                    self.log(self.STATES, "possible states: {}".format(states))
 
                 if (State.TW in states and prev_state != State.CR or State.CW1 in states) and state in {State.RWC2, State.RIC2}:
                     self.notify()
@@ -139,26 +143,26 @@ class RobotAgent(Agent):
                     try:
                         self.wait()
                     except:
-                        if self.logger.isEnabledFor(logging.INFO):
-                            self.info("states: {}".format(self.states))
+                        if self.logger.isEnabledFor(self.STATES):
+                            self.log(self.STATES, "states: {}".format(self.states))
 
                         self.learner.learn()
                         break
 
-                    self.debug("state: {}".format(state))
+                    self.log(self.STATES, "state: {}".format(state))
                     self.learner.add_action(state)
                     self.states.append(state)
 
                 state = self.guess_next_state(states)
-                self.debug("guessed state: {}".format(state))
+                self.log(self.STATES, "guessed state: {}".format(state))
                 self.state.value = state.value
                 self.notify()
 
                 try:
                     self.wait()
                 except:
-                    if self.logger.isEnabledFor(logging.INFO):
-                        self.info("states: {}".format(self.states))
+                    if self.logger.isEnabledFor(self.STATES):
+                        self.log(self.STATES, "states: {}".format(self.states))
 
                     self.learner.learn()
                     break
@@ -220,13 +224,13 @@ class RobotAgent(Agent):
                 self.learner.add_action(state)
                 self.learner.add_state(None, Message.fromString(msg) if msg is not None else None)
             elif state == State.End:
-                if self.logger.isEnabledFor(logging.INFO):
-                    self.info("states: {}".format(self.states))
+                if self.logger.isEnabledFor(self.STATES):
+                    self.log(self.STATES, "states: {}".format(self.states))
 
                 self.learner.learn()
                 break
 
-            self.debug("state: {}".format(state))
+            self.log(self.STATES, "state: {}".format(state))
             self.states.append(state)
 
             if state in {State.CW2, State.CI2}:
@@ -234,7 +238,7 @@ class RobotAgent(Agent):
             elif state not in {State.RRC2, State.RIRC2}:
                 self.state.value = self.guess_next_state().value
 
-            self.debug("guessed state: {}".format(State(self.state.value)))
+            self.log(self.STATES, "guessed state: {}".format(State(self.state.value)))
 
     def TR(self):
         if self.object_index_1 is None:
@@ -267,8 +271,8 @@ class RobotAgent(Agent):
 
     def CW2(self):
         if insert(self.kb, [self.object_index_1, self.word]):
-            if self.logger.isEnabledFor(logging.DEBUG):
-                self.debug("kb: {}".format(self.kb))
+            if self.logger.isEnabledFor(self.KB):
+                self.log(self.KB, "kb: {}".format(self.kb))
 
             with open(self.kb_file, "w") as file:
                 json.dump(self.kb, file)
@@ -305,8 +309,8 @@ class RobotAgent(Agent):
 
     def CI2(self):
         if insert(self.kb, [self.object_index_1, self.word]):
-            if self.logger.isEnabledFor(logging.DEBUG):
-                self.debug("kb: {}".format(self.kb))
+            if self.logger.isEnabledFor(self.KB):
+                self.log(self.KB, "kb: {}".format(self.kb))
 
             with open(self.kb_file, "w") as file:
                 json.dump(self.kb, file)

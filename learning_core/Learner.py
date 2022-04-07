@@ -24,7 +24,6 @@
 # grant you additional permission to convey the resulting work.
 
 from .ObservationBuilder import ObservationBuilder
-from .observation_parsing import parse_observation
 from agent_core.Message import Message
 from agent_core.State import State as AgentState
 from meta_planning import LearningTask

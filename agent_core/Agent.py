@@ -21,6 +21,12 @@ import sys
 import random
 
 class Agent:
+    SIMULATION= 25
+    SENT_MESSAGES= 20
+    RECEIVED_MESSAGES= 18
+    STATES= 12
+    SYNCHRONIZATION= 10
+
     def __init__(self, id, path_prefix, seed, noise, interaction):
         self.id = id
         self.path_prefix = path_prefix
@@ -31,7 +37,7 @@ class Agent:
         self.state = State.Start
         self.logger = logging.getLogger("{}.{}".format(self.__class__.__name__, self.id))
         self.logger.addHandler(logging.StreamHandler(sys.stdout))
-        self.logger.setLevel(logging.INFO)
+        self.logger.setLevel(self.SENT_MESSAGES)
 
     def start(self):
         self.process.start()
@@ -51,36 +57,30 @@ class Agent:
 
         self.process = Process(target= self.run)
 
-    def info(self, msg):
-        self.logger.info("{}#{} {}".format(self.__class__.__name__, self.id, msg))
-
-    def debug(self, msg):
-        self.logger.debug("{}#{} {}".format(self.__class__.__name__, self.id, msg))
+    def log(self, level, msg):
+        self.logger.log(level, "{}#{} {}".format(self.__class__.__name__, self.id, msg))
 
     def send(self, msg):
         self.conn.send(msg)
-        self.info("sent: " + msg)
+        self.log(self.SENT_MESSAGES, "sent: " + msg)
 
     def recv(self):
         msg = self.conn.recv()
-        self.debug("received: " + msg)
+        self.log(self.RECEIVED_MESSAGES, "received: " + msg)
         return msg
 
     def wait(self):
-        self.debug("waiting")
+        self.log(self.SYNCHRONIZATION, "waiting")
         self.barrier.wait()
-        self.debug("continuing")
+        self.log(self.SYNCHRONIZATION, "continuing")
 
     def notify(self):
-        self.debug("notifying")
+        self.log(self.SYNCHRONIZATION, "notifying")
         self.barrier.wait()
-        self.debug("notified")
+        self.log(self.SYNCHRONIZATION, "notified")
 
     def run(self):
         random.seed(self.seed)
-        self.info("seed: {}".format(self.seed))
-        self.info("noise: {}".format(self.noise))
-        self.info("interaction: " + ("FirstInteraction" if self.interaction == State.FirstInteraction else "SecondInteraction"))
         self.object_index_1 = None
         self.object_index_2 = None
         self.word = None
