@@ -6,21 +6,27 @@ This work uses meta-planning, which is part of the research presented in these p
 - "Learning action models with minimal observability" ([AIJ 2019](https://www.sciencedirect.com/science/article/abs/pii/S0004370218304259))
 - "Model recognition as planning" ([ICAPS 2019](https://ojs.aaai.org/index.php/ICAPS/article/view/3547))
 
-## Licensing
-TCC
+## Requirements
+To use this project you first need to install its requirements. In the cloned repository run:
+```shell
+pip install -r requirements.txt
+```
+
+## License
+TCC  
 Copyright (C) 2022  Natan Junges &lt;natanjunges@alunos.utfpr.edu.br&gt;
 
-TCC is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
+TCC is free software: you can redistribute it and/or modify  
+it under the terms of the GNU General Public License as published by  
+the Free Software Foundation, either version 3 of the License, or  
 any later version.
 
-TCC is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+TCC is distributed in the hope that it will be useful,  
+but WITHOUT ANY WARRANTY; without even the implied warranty of  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the  
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
+You should have received a copy of the GNU General Public License  
 along with TCC.  If not, see &lt;https://www.gnu.org/licenses/&gt;.
 
 Additional permission under GNU GPL version 3 section 7
@@ -29,6 +35,8 @@ If you modify TCC, or any covered work, by linking or combining it with meta-pla
 
 ### meta-planning's license
 This software is available at [daineto/meta-planning](https://github.com/daineto/meta-planning).
+
+My fork is available at [natanjunges/meta-planning](https://github.com/natanjunges/meta-planning).
 
 License sent by Diego Aineto (dieaigar@dsic.upv.es) via email to Natan Junges (natanjunges@alunos.utfpr.edu.br) on request, where "you" means exclusively the author of TCC (i.e. Natan Junges), and "your thesis" means exclusively TCC and the accompanying undergraduate thesis. Anyone else who wishes to use this software must get themselves a license from its authors.
 

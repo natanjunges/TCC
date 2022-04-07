@@ -28,7 +28,7 @@ import os
 import logging
 
 class RobotAgent(Agent):
-    def __init__(self, id, path_prefix, seed, noise, interaction, n_objects, batch_size, initial_state= None):
+    def __init__(self, id, path_prefix, seed, noise, interaction, n_objects, initial_state= None):
         super().__init__(id, path_prefix, seed, noise, interaction)
         self.n_objects = n_objects
         self.kb_file = "{}/robot{}_kb.json".format(self.path_prefix, self.id)
@@ -47,9 +47,6 @@ class RobotAgent(Agent):
 
             if self.interaction == State.SecondInteraction:
                 os.system("patch \"{}\" < ./learning_core/model/empty-2.pddl.patch > /dev/null".format(self.model_file))
-
-        self.batch_size = batch_size
-        self.obs_file = "{}/tmp/robot{}_obs".format(self.path_prefix, self.id)
 
         self.learner = Learner(self)
         self.state = Value("i", State.Start.value)

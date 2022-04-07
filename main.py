@@ -24,7 +24,7 @@ import sys
 import json
 
 if __name__ == "__main__":
-    path_prefix = "."
+    path_prefix = "./data"
 
     with open(path_prefix + "/objects.json", "r") as file:
         objects = json.load(file)
@@ -35,12 +35,11 @@ if __name__ == "__main__":
     #interaction = State.FirstInteraction
     interaction = State.SecondInteraction
     noise = 0.1
-    batch_size = 10
-    robot = RobotAgent(id, path_prefix, seed, noise, interaction, len(objects), batch_size)
+    robot = RobotAgent(id, path_prefix, seed, noise, interaction, len(objects))
     human = HumanAgent(id, path_prefix, seed, noise, interaction, objects)
     human.connect(robot)
 
-    for _ in range(100 * batch_size):
+    for _ in range(1000):
         robot.start()
         human.start()
         robot.join()
