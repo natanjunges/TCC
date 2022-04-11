@@ -102,7 +102,7 @@ class RobotAgent(Agent):
         if len(states) == 1:
             return states[0]
         else:
-            return random.choice(self.learner.choose(states))
+            return self.learner.choose(states)
 
     def run(self):
         super().run()
@@ -175,7 +175,6 @@ class RobotAgent(Agent):
                 self.learner.add_state(None, Message.fromString(msg))
 
                 if state in {State.CW1, State.CI1}:
-                    self.learner.add_state(None, None)
                     msg = None
             elif state == State.TR:
                 self.TR()
@@ -198,7 +197,7 @@ class RobotAgent(Agent):
             elif state == State.CW2:
                 self.CW2()
                 self.learner.add_action(state)
-                self.learner.add_state(None, Message.fromString(msg) if msg is not None else None)
+                self.learner.add_state(None, Message.fromString(msg) if msg is not None else None, True)
             elif state == State.TIR:
                 self.TIR()
                 self.learner.add_action(state)
@@ -219,7 +218,7 @@ class RobotAgent(Agent):
             elif state == State.CI2:
                 self.CI2()
                 self.learner.add_action(state)
-                self.learner.add_state(None, Message.fromString(msg) if msg is not None else None)
+                self.learner.add_state(None, Message.fromString(msg) if msg is not None else None, True)
             elif state == State.End:
                 if self.logger.isEnabledFor(self.STATES):
                     self.log(self.STATES, "states: {}".format(self.states))

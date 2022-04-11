@@ -33,6 +33,7 @@ from meta_planning.parsers import parse_model
 from copy import deepcopy
 import os
 import os.path
+import random
 
 class Learner:
     objects = [
@@ -71,13 +72,15 @@ class Learner:
         self.builder = ObservationBuilder(self.objects, deepcopy(self.initial_state))
         self.robot = robot
         self.model = parse_model(self.robot.model_file)
+        random.seed(self.robot.seed)
 
     def reset(self):
         self.builder = ObservationBuilder(self.objects, deepcopy(self.initial_state))
         self.model = parse_model(self.robot.model_file)
+        random.seed(self.robot.seed)
 
-    def add_state(self, sent_msg, recv_msg):
-        self.builder.add_state(State([
+    def add_state(self, sent_msg, recv_msg, final= False):
+        literals = [
             Literal("set", ["object-index-1"], self.robot.object_index_1 is not None),
             Literal("set", ["object-index-2"], self.robot.object_index_2 is not None),
             Literal("set", ["word"], self.robot.word is not None),
@@ -91,7 +94,16 @@ class Learner:
             Literal("sent-to-robot", ["boolean"], recv_msg == Message.Boolean),
             Literal("sent-to-robot", ["integer-question"], recv_msg == Message.IntegerQuestion),
             Literal("sent-to-robot", ["string-question"], recv_msg == Message.StringQuestion)
-        ], None))
+        ]
+
+        if final:
+            literals += [
+                Literal("set", ["object-index"], False),
+                Literal("set", ["word-1"], False),
+                Literal("set", ["word-2"], False)
+            ]
+
+        self.builder.add_state(State(literals, None))
 
     def add_action(self, state):
         if state == AgentState.TR:
@@ -130,7 +142,7 @@ class Learner:
             self.builder.add_action(Action("goto-ci2", ["object-index-1", "object-index-2", "word"]))
 
     def choose(self, possible_states):
-        return possible_states
+        return random.choice(possible_states)
 
     def learn(self):
         task = LearningTask(self.model, [self.builder.observation])

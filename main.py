@@ -32,8 +32,8 @@ if __name__ == "__main__":
     id = 1
     #seed = 0
     seed = random.randrange(sys.maxsize)
-    #interaction = State.FirstInteraction
-    interaction = State.SecondInteraction
+    interaction = State.FirstInteraction
+    #interaction = State.SecondInteraction
     noise = 0.1
     robot = RobotAgent(id, path_prefix, seed, noise, interaction, len(objects))
     human = HumanAgent(id, path_prefix, seed, noise, interaction, objects)

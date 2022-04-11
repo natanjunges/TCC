@@ -142,7 +142,7 @@ class HumanAgent(Agent):
         # CI1, CI2
 
         if next_state == State.TR:
-            return state in {State.RRC1, State.RRC2, State.TW, State.CW1, State.RIRC1, State.CIR, State.CI1}
+            return state in {State.Start, State.RRC1, State.RRC2, State.TW, State.CW1, State.RIRC1, State.CIR, State.CI1}
         elif next_state in {State.RRC1, State.RIRC1}:
             return state in {State.TR, State.TIR}
         elif next_state in {State.RRC2, State.RIRC2}:
@@ -160,7 +160,7 @@ class HumanAgent(Agent):
         elif next_state in {State.CW2, State.CI2}:
             return state in {State.TW, State.CW1, State.CIR, State.CI1} and self.object_index_1 is not None and self.word is not None
         elif next_state == State.TIR:
-            return state in {State.RRC1, State.TW, State.CW1, State.RIRC1, State.RIRC2, State.CIR, State.CI1}
+            return state in {State.Start, State.RRC1, State.TW, State.CW1, State.RIRC1, State.RIRC2, State.CIR, State.CI1}
         elif next_state == State.CIR:
             return state in {State.TW, State.CW1, State.RIRC2, State.CIR, State.CI1} and self.object_index_1 is not None and self.object_index_2 is not None and self.object_index_1 == self.object_index_2
         elif next_state == State.RIC1:
