@@ -33,7 +33,6 @@ from meta_planning.parsers import parse_model
 from copy import deepcopy
 import os
 import os.path
-import random
 
 class Learner:
     objects = [
@@ -72,12 +71,10 @@ class Learner:
         self.builder = ObservationBuilder(self.objects, deepcopy(self.initial_state))
         self.robot = robot
         self.model = parse_model(self.robot.model_file)
-        random.seed(self.robot.seed)
 
     def reset(self):
         self.builder = ObservationBuilder(self.objects, deepcopy(self.initial_state))
         self.model = parse_model(self.robot.model_file)
-        random.seed(self.robot.seed)
 
     def add_state(self, sent_msg, recv_msg, final= False):
         literals = [
@@ -142,7 +139,7 @@ class Learner:
             self.builder.add_action(Action("goto-ci2", ["object-index-1", "object-index-2", "word"]))
 
     def choose(self, possible_states):
-        return random.choice(possible_states)
+        return self.robot.random.choice(possible_states)
 
     def learn(self):
         task = LearningTask(self.model, [self.builder.observation])

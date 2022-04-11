@@ -17,7 +17,6 @@
 from .Agent import Agent
 from .State import State
 from .utils import insert, merge, sub
-import random
 from multiprocessing import Pipe, Barrier
 import json
 import os.path
@@ -432,14 +431,14 @@ class HumanAgent(Agent):
         self.word_1 = None
         self.word_2 = None
 
-        if self.noise >= 1 or self.noise > 0 and random.random() < self.noise:
-            self.object_index = random.choice([self.object_index - 1 if self.object_index > 0 else self.object_index, self.object_index + 1 if self.object_index < len(self.objects) - 1 else self.object_index])
+        if self.noise >= 1 or self.noise > 0 and self.random.random() < self.noise:
+            self.object_index = self.random.choice([self.object_index - 1 if self.object_index > 0 else self.object_index, self.object_index + 1 if self.object_index < len(self.objects) - 1 else self.object_index])
 
         self.send("{}?".format(self.object_index))
 
     def TW(self):
         if self.word_1 is None:
-            self.word_1 = random.choice(self.objects[self.object_index])
+            self.word_1 = self.random.choice(self.objects[self.object_index])
 
         self.word = None
         self.word_2 = None
@@ -465,8 +464,8 @@ class HumanAgent(Agent):
         self.word_1 = None
         self.word_2 = None
 
-        if self.noise >= 1 or self.noise > 0 and random.random() < self.noise:
-            self.object_index = random.choice([self.object_index - 1 if self.object_index > 0 else self.object_index, self.object_index + 1 if self.object_index < len(self.objects) - 1 else self.object_index])
+        if self.noise >= 1 or self.noise > 0 and self.random.random() < self.noise:
+            self.object_index = self.random.choice([self.object_index - 1 if self.object_index > 0 else self.object_index, self.object_index + 1 if self.object_index < len(self.objects) - 1 else self.object_index])
 
         self.send("{}?".format(self.object_index))
 

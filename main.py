@@ -22,6 +22,7 @@ from agent_core.State import State
 import random
 import sys
 import json
+from time import time
 
 if __name__ == "__main__":
     path_prefix = "./data"
@@ -31,7 +32,8 @@ if __name__ == "__main__":
 
     id = 1
     #seed = 0
-    seed = random.randrange(sys.maxsize)
+    seed_generator = random.Random(time())
+    seed = seed_generator.randrange(sys.maxsize)
     interaction = State.FirstInteraction
     #interaction = State.SecondInteraction
     noise = 0.1
@@ -44,6 +46,6 @@ if __name__ == "__main__":
         human.start()
         robot.join()
         human.join()
-        seed = random.randrange(sys.maxsize)
+        seed = seed_generator.randrange(sys.maxsize)
         robot.reset(seed= seed)
         human.reset(seed= seed)

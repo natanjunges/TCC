@@ -19,7 +19,6 @@ from .State import State
 from .Message import Message
 from .utils import insert
 from learning_core.Learner import Learner
-import random
 from multiprocessing import Value
 import os.path
 import json
@@ -113,7 +112,7 @@ class RobotAgent(Agent):
             self.log(self.SIMULATION, "interaction: " + ("FirstInteraction" if self.interaction == State.FirstInteraction else "SecondInteraction"))
             self.log(self.SIMULATION, "initial state: {}".format(self.initial_state))
 
-        self.state.value = (self.initial_state if self.initial_state is not None else random.choice([State.TR, State.TIR])).value
+        self.state.value = (self.initial_state if self.initial_state is not None else self.random.choice([State.TR, State.TIR])).value
         self.states = []
         msg = None
         state = State.Start
@@ -238,7 +237,7 @@ class RobotAgent(Agent):
 
     def TR(self):
         if self.object_index_1 is None:
-            self.object_index_1 = random.randrange(self.n_objects)
+            self.object_index_1 = self.random.randrange(self.n_objects)
 
         self.object_index_2 = None
         self.word = None
@@ -259,8 +258,8 @@ class RobotAgent(Agent):
     def RWC1(self, msg):
         self.word = msg
 
-        if self.noise >= 1 or self.noise > 0 and random.random() < self.noise:
-            x = random.randrange(len(self.word))
+        if self.noise >= 1 or self.noise > 0 and self.random.random() < self.noise:
+            x = self.random.randrange(len(self.word))
             self.word = self.word[:x] + self.word[x + 1:]
 
         self.send(self.word + "?")
@@ -279,7 +278,7 @@ class RobotAgent(Agent):
 
     def TIR(self):
         if self.object_index_1 is None:
-            self.object_index_1 = random.randrange(self.n_objects)
+            self.object_index_1 = self.random.randrange(self.n_objects)
 
         self.object_index_2 = None
         self.word = None
@@ -299,7 +298,7 @@ class RobotAgent(Agent):
 
     def RIC1(self):
         if self.word is None:
-            self.word = random.choice(sorted({word for _, word in self.kb}))
+            self.word = self.random.choice(sorted({word for _, word in self.kb}))
 
         self.send(self.word + "?")
 

@@ -34,6 +34,7 @@ class Agent:
         self.seed = seed
         self.noise = noise
         self.interaction = interaction
+        self.random = random.Random(self.seed)
         self.process = Process(target= self.run)
         self.state = State.Start
         self.logger = logging.getLogger("{}.{}".format(self.__class__.__name__, self.id))
@@ -56,6 +57,7 @@ class Agent:
         if interaction is not None:
             self.interaction = interaction
 
+        self.random = random.Random(self.seed)
         self.process = Process(target= self.run)
 
     def log(self, level, msg):
@@ -85,7 +87,6 @@ class Agent:
         self.wait()
 
     def run(self):
-        random.seed(self.seed)
         self.object_index_1 = None
         self.object_index_2 = None
         self.word = None
