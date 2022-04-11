@@ -26,7 +26,7 @@
 from .ObservationBuilder import ObservationBuilder
 from agent_core.Message import Message
 from agent_core.State import State as AgentState
-from meta_planning import LearningTask
+from meta_planning import LearningTask, ModelRecognitionTask
 from meta_planning.pddl import TypedObject, Literal, Action
 from meta_planning.observations import State
 from meta_planning.parsers import parse_model
@@ -139,7 +139,28 @@ class Learner:
             self.builder.add_action(Action("goto-ci2", ["object-index-1", "object-index-2", "word"]))
 
     def choose(self, possible_states):
-        return self.robot.random.choice(possible_states)
+        model = [self.model]
+        prior = [1/len(possible_states)]
+        weights = []
+        sum = 0
+        builder = self.builder
+
+        for state in possible_states:
+            self.builder = deepcopy(builder)
+            self.add_action(state)
+            task = ModelRecognitionTask(model, [self.builder.observation], prior)
+            solution = task.recognize(t= 60//len(possible_states))
+            weights.append(solution.posteriors[0])
+            sum += solution.posteriors[0]
+
+        self.builder = builder
+
+        if sum != 0:
+            weights = [weight/sum for weight in weights]
+        else:
+            weights = prior * len(possible_states)
+
+        return self.robot.random.choices(possible_states, weights)[0]
 
     def learn(self):
         task = LearningTask(self.model, [self.builder.observation])
