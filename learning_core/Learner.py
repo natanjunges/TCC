@@ -149,7 +149,7 @@ class Learner:
             self.builder = deepcopy(builder)
             self.add_action(state)
             task = ModelRecognitionTask(model, [self.builder.observation], prior)
-            solution = task.recognize(t= 60//len(possible_states))
+            solution = task.recognize(t= 5, suffix= str(self.robot.id))
             weights.append(solution.posteriors[0])
             sum += solution.posteriors[0]
 
@@ -164,7 +164,7 @@ class Learner:
 
     def learn(self):
         task = LearningTask(self.model, [self.builder.observation])
-        solution = task.learn()
+        solution = task.learn(suffix= str(self.robot.id))
 
         if solution.solution_found:
             solution.learned_model.to_file(self.robot.model_file)

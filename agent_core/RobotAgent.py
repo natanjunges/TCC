@@ -28,11 +28,12 @@ import os
 class RobotAgent(Agent):
     KB= 15
 
-    def __init__(self, id, path_prefix, seed, noise, interaction, n_objects, initial_state= None):
+    def __init__(self, id, path_prefix, seed, noise, interaction, n_objects, initial_state= None, evaluate_only= False):
         super().__init__(id, path_prefix, seed, noise, interaction)
         self.n_objects = n_objects
         self.kb_file = "{}/robot{}_kb.json".format(self.path_prefix, self.id)
         self.initial_state = initial_state if self.interaction == State.SecondInteraction else self.interaction
+        self.evaluate_only = evaluate_only
 
         if os.path.isfile(self.kb_file):
             with open(self.kb_file, "r") as file:
@@ -44,9 +45,6 @@ class RobotAgent(Agent):
 
         if not os.path.isfile(self.model_file):
             copyfile("./learning_core/model/empty-1.pddl", self.model_file)
-
-            if self.interaction == State.SecondInteraction:
-                os.system("patch \"{}\" < ./learning_core/model/empty-2.pddl.patch > /dev/null".format(self.model_file))
 
         self.learner = Learner(self)
         self.state = Value("i", State.Start.value)
@@ -71,7 +69,7 @@ class RobotAgent(Agent):
     def poll(self):
         return self.conn.poll()
 
-    def patch_model2(self):
+    def patch_model(self):
         os.system("patch \"{}\" < ./learning_core/model/empty-2.pddl.patch > /dev/null".format(self.model_file))
         self.learner = Learner(self)
 
@@ -124,7 +122,9 @@ class RobotAgent(Agent):
                 if self.logger.isEnabledFor(self.STATES):
                     self.log(self.STATES, "states: {}".format(self.states))
 
-                self.learner.learn()
+                if not self.evaluate_only:
+                    self.learner.learn()
+
                 break
 
             prev_state = state
@@ -144,7 +144,9 @@ class RobotAgent(Agent):
                         if self.logger.isEnabledFor(self.STATES):
                             self.log(self.STATES, "states: {}".format(self.states))
 
-                        self.learner.learn()
+                        if not self.evaluate_only:
+                            self.learner.learn()
+
                         break
 
                     self.log(self.STATES, "state: {}".format(state))
@@ -160,7 +162,9 @@ class RobotAgent(Agent):
                     if self.logger.isEnabledFor(self.STATES):
                         self.log(self.STATES, "states: {}".format(self.states))
 
-                    self.learner.learn()
+                    if not self.evaluate_only:
+                        self.learner.learn()
+
                     break
 
                 self.learner.add_action(state)
@@ -222,7 +226,9 @@ class RobotAgent(Agent):
                 if self.logger.isEnabledFor(self.STATES):
                     self.log(self.STATES, "states: {}".format(self.states))
 
-                self.learner.learn()
+                if not self.evaluate_only:
+                    self.learner.learn()
+
                 break
 
             self.log(self.STATES, "state: {}".format(state))

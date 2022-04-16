@@ -62,6 +62,13 @@ class State(Enum):
     FirstInteraction = TransmitReferent
     SecondInteraction = TransmitInducedReferent
 
+    @classmethod
+    def __getitem__(cls, key):
+        try:
+            return cls[key]
+        except KeyError as e:
+            raise TypeError() from e
+
     def __str__(self):
         return super().__str__().lstrip("State.")
 
