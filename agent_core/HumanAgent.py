@@ -26,7 +26,7 @@ class HumanAgent(Agent):
     def __init__(self, id, path_prefix, seed, noise, interaction, objects):
         super().__init__(id, path_prefix, seed, noise, interaction)
         self.objects = objects
-        self.log_file = "{}/robot{}_log.json".format(self.path_prefix, self.id)
+        self.log_file = "{}/{}/log.json".format(self.path_prefix, self.id)
 
     def reset(self, seed= None, noise= None, interaction= None):
         super().reset(seed, noise, interaction)

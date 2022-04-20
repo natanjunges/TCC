@@ -29,7 +29,7 @@ import os
 if __name__ == "__main__":
     parser = ArgumentParser(description= "TCC - Software part of my undergraduate thesis in Computer Engineering at the Federal University of Technology – Parana (UTFPR), Brazil.")
     parser.add_argument("--robot-ids", "-I", type= int, metavar= "ID", nargs="+", required= True)
-    parser.add_argument("--path-prefix", "-p", metavar= "PREFIX", default= "./data")
+    parser.add_argument("--path-prefix", "-p", type= os.path.abspath, metavar= "PREFIX", default= "./data")
     parser.add_argument("--seed", "-s", type= float, default= time())
     parser.add_argument("--noise", "-n", type= float, default= 0.1)
     parser.add_argument("--interaction", "-i", type= State.__getitem__, choices= [State.FirstInteraction, State.SecondInteraction], metavar= "{FirstInteraction, SecondInteraction}", required= True)
@@ -38,6 +38,7 @@ if __name__ == "__main__":
     parser.add_argument("--evaluate-only", "-e", action= "store_true")
     parser.add_argument("--rounds", "-r", type= int, required= True)
     args = parser.parse_args()
+    args.patch_model = args.interaction == State.SecondInteraction and args.patch_model
     run = "-I {} -p \"{}\" -s {} -n {} -i {}".format(" ".join([str(id) for id in args.robot_ids]), args.path_prefix, args.seed, args.noise, "FirstInteraction" if args.interaction == State.FirstInteraction else "SecondInteraction")
 
     if args.initial_state is not None:
@@ -62,6 +63,9 @@ if __name__ == "__main__":
     humans = dict()
 
     for id in args.robot_ids:
+        if not os.path.isdir("{}/{}/".format(args.path_prefix, id)):
+            os.mkdir("{}/{}/".format(args.path_prefix, id))
+
         seed = seed_generator.randrange(sys.maxsize)
         robots[id] = RobotAgent(id, args.path_prefix, seed, args.noise, args.interaction, len(objects), args.initial_state, args.evaluate_only)
 

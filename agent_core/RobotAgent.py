@@ -31,7 +31,7 @@ class RobotAgent(Agent):
     def __init__(self, id, path_prefix, seed, noise, interaction, n_objects, initial_state= None, evaluate_only= False):
         super().__init__(id, path_prefix, seed, noise, interaction)
         self.n_objects = n_objects
-        self.kb_file = "{}/robot{}_kb.json".format(self.path_prefix, self.id)
+        self.kb_file = "{}/{}/kb.json".format(self.path_prefix, self.id)
         self.initial_state = initial_state if self.interaction == State.SecondInteraction else self.interaction
         self.evaluate_only = evaluate_only
 
@@ -41,10 +41,10 @@ class RobotAgent(Agent):
         else:
             self.kb = []
 
-        self.model_file = "{}/robot{}_model.pddl".format(self.path_prefix, self.id)
+        self.model_file = "{}/{}/model.pddl".format(self.path_prefix, self.id)
 
         if not os.path.isfile(self.model_file):
-            copyfile("./learning_core/model/empty-1.pddl", self.model_file)
+            copyfile(os.path.dirname(os.path.abspath(__file__)) + "/../learning_core/model/empty-1.pddl", self.model_file)
 
         self.learner = Learner(self)
         self.state = Value("i", State.Start.value)
@@ -70,7 +70,7 @@ class RobotAgent(Agent):
         return self.conn.poll()
 
     def patch_model(self):
-        os.system("patch \"{}\" < ./learning_core/model/empty-2.pddl.patch > /dev/null".format(self.model_file))
+        os.system("patch \"{}\" < \"{}/../learning_core/model/empty-2.pddl.patch\" > /dev/null".format(self.model_file, os.path.dirname(os.path.abspath(__file__))))
         self.learner = Learner(self)
 
     def possible_states(self, msg):
