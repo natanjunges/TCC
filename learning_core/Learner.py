@@ -29,7 +29,7 @@ from agent_core.State import State as AgentState
 from meta_planning import LearningTask, ModelRecognitionTask
 from meta_planning.pddl import TypedObject, Literal, Action
 from meta_planning.observations import State
-from meta_planning.parsers import parse_model
+from meta_planning.parsers import parse_model, parse_trajectory
 from copy import deepcopy
 import os
 import os.path
@@ -71,10 +71,16 @@ class Learner:
         self.builder = ObservationBuilder(self.objects, deepcopy(self.initial_state))
         self.robot = robot
         self.model = parse_model(self.robot.model_file)
+        self.trajectory_file = "{}/{}/trajectory.pddl".format(self.robot.path_prefix, self.robot.id)
+        self.trajectories = []
 
     def reset(self):
         self.builder = ObservationBuilder(self.objects, deepcopy(self.initial_state))
         self.model = parse_model(self.robot.model_file)
+
+        if os.path.isfile(self.trajectory_file):
+            self.trajectories.append(parse_trajectory(self.trajectory_file, self.model))
+            os.remove(self.trajectory_file)
 
     def add_state(self, sent_msg, recv_msg, final= False):
         literals = [
@@ -167,4 +173,5 @@ class Learner:
         solution = task.learn(suffix= str(self.robot.id))
 
         if solution.solution_found:
+            solution.explanations[0].trajectory.to_file(self.trajectory_file)
             solution.learned_model.to_file(self.robot.model_file)
