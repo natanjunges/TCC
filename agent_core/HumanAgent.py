@@ -23,9 +23,10 @@ import os.path
 from datetime import datetime
 
 class HumanAgent(Agent):
-    def __init__(self, id, path_prefix, seed, noise, interaction, objects):
+    def __init__(self, id, path_prefix, seed, noise, interaction, objects, evaluate_only= False):
         super().__init__(id, path_prefix, seed, noise, interaction)
         self.objects = objects
+        self.evaluate_only = evaluate_only
         self.log_file = "{}/{}/log.json".format(self.path_prefix, self.id)
 
     def reset(self, seed= None, noise= None, interaction= None):
@@ -224,6 +225,9 @@ class HumanAgent(Agent):
         return 0.02 * state.value + 0.8
 
     def d(self):
+        if self.evaluate_only:
+            return ([], 1)
+
         transitions = []
         new_transitions = self.get_transitions()
 
@@ -266,7 +270,7 @@ class HumanAgent(Agent):
             "last_state": str(state),
             "legal_transition": legal,
             "n_transitions": self.state_transitions,
-            "new_transitions": [[str(transition[0]), str(transition[1])] for transition in transitions],
+            "new_transitions": [[str(transition[0]), str(transition[1])] for transition in transitions] if not self.evaluate_only else [],
             "score": score
         }
 

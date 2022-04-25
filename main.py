@@ -72,7 +72,7 @@ if __name__ == "__main__":
         if args.patch_model:
             robots[id].patch_model()
 
-        humans[id] = HumanAgent(id, args.path_prefix, seed, args.noise, args.interaction, objects)
+        humans[id] = HumanAgent(id, args.path_prefix, seed, args.noise, args.interaction, objects, args.evaluate_only)
         humans[id].connect(robots[id])
 
     for i in range(args.rounds):
