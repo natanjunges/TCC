@@ -1,6 +1,6 @@
 (define (domain pfl)
 (:requirements :strips)
-(:types object message - object variable - object)
+(:types object message - object i - message s - message b - message iq - message sq - message variable - object oi1 - variable oi2 - variable oi - variable w1 - variable w2 - variable w - variable)
 (:predicates
 	(sent-to-human ?m1 - message)
 	(sent-to-robot ?m1 - message)
@@ -8,106 +8,106 @@
 )
 
 (:action goto-tir-pre
-	:parameters (?oi2 - variable ?w - variable)
+	:parameters (?oi2 - oi2 ?w - w)
 	:precondition (and )
-	:effect (and 
+	:effect (and
 	)
 )
 
 (:action goto-tir
-	:parameters (?oi1 - variable ?oi2 - variable ?w - variable ?i - message)
+	:parameters (?oi1 - oi1 ?oi2 - oi2 ?w - w ?i - i)
 	:precondition (and )
-	:effect (and 
+	:effect (and
 	)
 )
 
 (:action goto-rirc1-pre
-	:parameters (?w1 - variable ?w2 - variable)
+	:parameters (?w1 - w1 ?w2 - w2)
 	:precondition (and )
-	:effect (and 
+	:effect (and
 	)
 )
 
 (:action goto-rirc1
-	:parameters (?oi - variable ?w1 - variable ?w2 - variable ?i - message ?iq - message)
+	:parameters (?oi - oi ?w1 - w1 ?w2 - w2 ?i - i ?iq - iq)
 	:precondition (and )
-	:effect (and 
+	:effect (and
 	)
 )
 
 (:action goto-rirc2-pre
-	:parameters (?w - variable)
+	:parameters (?w - w)
 	:precondition (and )
-	:effect (and 
+	:effect (and
 	)
 )
 
 (:action goto-rirc2
-	:parameters (?oi1 - variable ?oi2 - variable ?w - variable ?iq - message)
+	:parameters (?oi1 - oi1 ?oi2 - oi2 ?w - w ?iq - iq)
 	:precondition (and )
-	:effect (and 
+	:effect (and
 	)
 )
 
 (:action goto-cir
-	:parameters (?oi1 - variable ?oi2 - variable ?b - message)
+	:parameters (?oi1 - oi1 ?oi2 - oi2 ?b - b)
 	:precondition (and )
-	:effect (and 
+	:effect (and
 	)
 )
 
 (:action goto-cir-post
-	:parameters (?b - message)
+	:parameters (?b - b)
 	:precondition (and )
-	:effect (and 
+	:effect (and
 	)
 )
 
 (:action goto-ric1
-	:parameters (?w - variable ?s - message ?sq - message)
+	:parameters (?w - w ?s - s ?sq - sq)
 	:precondition (and )
-	:effect (and 
+	:effect (and
 	)
 )
 
 (:action goto-ric2-pre
-	:parameters (?w1 - variable)
+	:parameters (?w1 - w1)
 	:precondition (and )
-	:effect (and 
+	:effect (and
 	)
 )
 
 (:action goto-ric2
-	:parameters (?oi - variable ?w1 - variable ?w2 - variable ?sq - message)
+	:parameters (?oi - oi ?w1 - w1 ?w2 - w2 ?sq - sq)
 	:precondition (and )
-	:effect (and 
+	:effect (and
 	)
 )
 
 (:action goto-ci1
-	:parameters (?oi - variable ?w2 - variable ?b - message)
+	:parameters (?oi - oi ?w2 - w2 ?b - b)
 	:precondition (and )
-	:effect (and 
+	:effect (and
 	)
 )
 
 (:action goto-ci1-post
-	:parameters (?b - message)
+	:parameters (?b - b)
 	:precondition (and )
-	:effect (and 
+	:effect (and
 	)
 )
 
 (:action goto-ci2-pre
-	:parameters (?oi2 - variable)
+	:parameters (?oi2 - oi2)
 	:precondition (and )
-	:effect (and 
+	:effect (and
 	)
 )
 
 (:action goto-ci2
-	:parameters (?oi1 - variable ?oi2 - variable ?w - variable)
+	:parameters (?oi1 - oi1 ?oi2 - oi2 ?w - w)
 	:precondition (and )
-	:effect (and 
+	:effect (and
 	)
 ))

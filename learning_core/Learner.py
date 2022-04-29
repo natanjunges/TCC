@@ -29,7 +29,7 @@ from agent_core.State import State as AgentState
 from meta_planning import LearningTask, ModelRecognitionTask
 from meta_planning.pddl import TypedObject, Literal, Action
 from meta_planning.observations import State
-from meta_planning.parsers import parse_model, parse_trajectory
+from meta_planning.parsers import parse_model
 from meta_planning.parsers.observation_parsing import parse_observation
 from copy import deepcopy
 import os
@@ -37,17 +37,17 @@ import os.path
 
 class Learner:
     objects = [
-        TypedObject("object-index-1", "variable"),
-        TypedObject("object-index-2", "variable"),
-        TypedObject("object-index", "variable"),
-        TypedObject("word-1", "variable"),
-        TypedObject("word-2", "variable"),
-        TypedObject("word", "variable"),
-        TypedObject("integer", "message"),
-        TypedObject("string", "message"),
-        TypedObject("boolean", "message"),
-        TypedObject("integer-question", "message"),
-        TypedObject("string-question", "message")
+        TypedObject("object-index-1", "oi1"),
+        TypedObject("object-index-2", "oi2"),
+        TypedObject("object-index", "oi"),
+        TypedObject("word-1", "w1"),
+        TypedObject("word-2", "w2"),
+        TypedObject("word", "w"),
+        TypedObject("integer", "i"),
+        TypedObject("string", "s"),
+        TypedObject("boolean", "b"),
+        TypedObject("integer-question", "iq"),
+        TypedObject("string-question", "sq")
     ]
     initial_state = State([
         Literal("set", ["object-index-1"], False),
@@ -67,27 +67,79 @@ class Learner:
         Literal("sent-to-robot", ["integer-question"], False),
         Literal("sent-to-robot", ["string-question"], False)
     ], None)
+    pre_actions = {
+        AgentState.TR: Action("goto-tr-pre", ["object-index-2", "word"]),
+        AgentState.RRC1: Action("goto-rrc1-pre", ["word-1", "word-2"]),
+        AgentState.RRC2: Action("goto-rrc2-pre", ["word"]),
+        AgentState.TW: Action("goto-tw-pre", ["word-2"]),
+        AgentState.CW2: Action("goto-cw2-pre", ["object-index-2"]),
+        AgentState.TIR: Action("goto-tir-pre", ["object-index-2", "word"]),
+        AgentState.RIRC1: Action("goto-rirc1-pre", ["word-1", "word-2"]),
+        AgentState.RIRC2: Action("goto-rirc2-pre", ["word"]),
+        AgentState.RIC2: Action("goto-ric2-pre", ["word-1"]),
+        AgentState.CI2: Action("goto-ci2-pre", ["object-index-2"])
+    }
+    actions = {
+        AgentState.TR: Action("goto-tr", ["object-index-1", "object-index-2", "word", "integer"]),
+        AgentState.RRC1: Action("goto-rrc1", ["object-index", "word-1", "word-2", "integer", "integer-question"]),
+        AgentState.RRC2: Action("goto-rrc2", ["object-index-1", "object-index-2", "word", "integer-question"]),
+        AgentState.CR: Action("goto-cr", ["object-index-1", "object-index-2", "boolean"]),
+        AgentState.TW: Action("goto-tw", ["word-1", "word-2", "string"]),
+        AgentState.RWC1: Action("goto-rwc1", ["word", "string", "string-question"]),
+        AgentState.RWC2: Action("goto-rwc2", ["word-1", "word-2", "string-question"]),
+        AgentState.CW1: Action("goto-cw1", ["word-1", "word-2", "boolean"]),
+        AgentState.CW2: Action("goto-cw2", ["object-index-1", "object-index-2", "word"]),
+        AgentState.TIR: Action("goto-tir", ["object-index-1", "object-index-2", "word", "integer"]),
+        AgentState.RIRC1: Action("goto-rirc1", ["object-index", "word-1", "word-2", "integer", "integer-question"]),
+        AgentState.RIRC2: Action("goto-rirc2", ["object-index-1", "object-index-2", "word", "integer-question"]),
+        AgentState.CIR: Action("goto-cir", ["object-index-1", "object-index-2", "boolean"]),
+        AgentState.RIC1: Action("goto-ric1", ["word", "string", "string-question"]),
+        AgentState.RIC2: Action("goto-ric2", ["object-index", "word-1", "word-2", "string-question"]),
+        AgentState.CI1: Action("goto-ci1", ["object-index", "word-2", "boolean"]),
+        AgentState.CI2: Action("goto-ci2", ["object-index-1", "object-index-2", "word"])
+    }
+    post_actions = {
+        AgentState.CR: Action("goto-cr-post", ["boolean"]),
+        AgentState.CW1: Action("goto-cw1-post", ["boolean"]),
+        AgentState.CIR: Action("goto-cir-post", ["boolean"]),
+        AgentState.CI1: Action("goto-ci1-post", ["boolean"])
+    }
+
+    @classmethod
+    def apply_arguments(cls, literals, parameters, arguments):
+        literals = deepcopy(literals)
+
+        for i in range(len(arguments)):
+            arg = arguments[i]
+            par = parameters[i].name
+
+            for j in range(len(literals)):
+                literals[j] = literals[j].rename_variables({x: arg for x in literals[j].args if x == par})
+
+        return literals
 
     def __init__(self, robot):
         self.builder = ObservationBuilder(self.objects, deepcopy(self.initial_state))
         self.robot = robot
         self.model = parse_model(self.robot.model_file)
         self.observation_file = "{}/{}/observation.pddl".format(self.robot.path_prefix, self.robot.id)
-        self.trajectory_file = "{}/{}/trajectory.pddl".format(self.robot.path_prefix, self.robot.id)
         self.observations = []
-        self.trajectories = []
+        self.parameters_dict = {scheme.name: scheme.parameters for scheme in self.model.schemata}
+        self.preconditions_dict = {scheme.name: list(scheme.precondition.parts) for scheme in self.model.schemata}
+        self.effects_dict = {scheme.name: [effect.literal for effect in scheme.effects] for scheme in self.model.schemata}
+        self.inferred_state = set(deepcopy(self.initial_state.literals))
 
     def reset(self):
         self.builder = ObservationBuilder(self.objects, deepcopy(self.initial_state))
         self.model = parse_model(self.robot.model_file)
+        self.parameters_dict = {scheme.name: scheme.parameters for scheme in self.model.schemata}
+        self.preconditions_dict = {scheme.name: list(scheme.precondition.parts) for scheme in self.model.schemata}
+        self.effects_dict = {scheme.name: [effect.literal for effect in scheme.effects] for scheme in self.model.schemata}
+        self.inferred_state = set(deepcopy(self.initial_state.literals))
 
         if os.path.isfile(self.observation_file):
             self.observations.append(parse_observation(self.observation_file, self.model))
             os.remove(self.observation_file)
-
-        if os.path.isfile(self.trajectory_file):
-            self.trajectories.append(parse_trajectory(self.trajectory_file, self.model))
-            os.remove(self.trajectory_file)
 
     def add_state(self, sent_msg, recv_msg, final= False):
         literals = [
@@ -116,64 +168,50 @@ class Learner:
         self.builder.add_state(State(literals, None))
 
     def add_action(self, state):
-        if state == AgentState.TR:
-            self.builder.add_action(Action("goto-tr", ["object-index-1", "object-index-2", "word", "integer"]))
-        elif state == AgentState.RRC1:
-            self.builder.add_action(Action("goto-rrc1", ["object-index", "word-1", "word-2", "integer", "integer-question"]))
-        elif state == AgentState.RRC2:
-            self.builder.add_action(Action("goto-rrc2", ["object-index-1", "object-index-2", "word", "integer-question"]))
-        elif state == AgentState.CR:
-            self.builder.add_action(Action("goto-cr", ["object-index-1", "object-index-2", "boolean"]))
-        elif state == AgentState.TW:
-            self.builder.add_action(Action("goto-tw", ["word-1", "word-2", "string"]))
-        elif state == AgentState.RWC1:
-            self.builder.add_action(Action("goto-rwc1", ["word", "string", "string-question"]))
-        elif state == AgentState.RWC2:
-            self.builder.add_action(Action("goto-rwc2", ["word-1", "word-2", "string-question"]))
-        elif state == AgentState.CW1:
-            self.builder.add_action(Action("goto-cw1", ["word-1", "word-2", "boolean"]))
-        elif state == AgentState.CW2:
-            self.builder.add_action(Action("goto-cw2", ["object-index-1", "object-index-2", "word"]))
-        elif state == AgentState.TIR:
-            self.builder.add_action(Action("goto-tir", ["object-index-1", "object-index-2", "word", "integer"]))
-        elif state == AgentState.RIRC1:
-            self.builder.add_action(Action("goto-rirc1", ["object-index", "word-1", "word-2", "integer", "integer-question"]))
-        elif state == AgentState.RIRC2:
-            self.builder.add_action(Action("goto-rirc2", ["object-index-1", "object-index-2", "word", "integer-question"]))
-        elif state == AgentState.CIR:
-            self.builder.add_action(Action("goto-cir", ["object-index-1", "object-index-2", "boolean"]))
-        elif state == AgentState.RIC1:
-            self.builder.add_action(Action("goto-ric1", ["word", "string", "string-question"]))
-        elif state == AgentState.RIC2:
-            self.builder.add_action(Action("goto-ric2", ["object-index", "word-1", "word-2", "string-question"]))
-        elif state == AgentState.CI1:
-            self.builder.add_action(Action("goto-ci1", ["object-index", "word-2", "boolean"]))
-        elif state == AgentState.CI2:
-            self.builder.add_action(Action("goto-ci2", ["object-index-1", "object-index-2", "word"]))
+        if state in self.pre_actions and not self.can_apply_action(self.inferred_state, self.actions[state]):
+            self.builder.add_action(deepcopy(self.pre_actions[state]))
+            self.inferred_state = self.apply_action(self.inferred_state, self.pre_actions[state])
+
+        self.builder.add_action(deepcopy(self.actions[state]))
+        self.inferred_state = self.apply_action(self.inferred_state, self.actions[state])
+
+    def add_post_action(self, state):
+        self.builder.add_action(deepcopy(self.post_actions[state]))
+        self.inferred_state = self.apply_action(self.inferred_state, self.post_actions[state])
 
     def choose(self, possible_states):
-        model = [self.model]
-        prior = [1/len(possible_states)]
         weights = []
         sum = 0
-        builder = self.builder
 
         for state in possible_states:
-            self.builder = deepcopy(builder)
-            self.add_action(state)
-            task = ModelRecognitionTask(model, [self.builder.observation], prior)
-            solution = task.recognize(t= 60 // len(possible_states), suffix= str(self.robot.id), lifted_inferred_trajectories= self.trajectories)
-            weights.append(solution.posteriors[0])
-            sum += solution.posteriors[0]
+            if self.can_apply_action(self.inferred_state, self.actions[state]):
+                weights.append(8)
+                sum += 8
+            elif state in self.pre_actions and self.can_apply_action(self.inferred_state, self.pre_actions[state]):
+                inferred_substate = self.apply_action(self.inferred_state, self.pre_actions[state])
 
-        self.builder = builder
+                if self.can_apply_action(inferred_substate, self.actions[state]):
+                    weights.append(8)
+                    sum += 8
+                else:
+                    weights.append(1)
+                    sum += 1
+            else:
+                weights.append(1)
+                sum += 1
 
-        if sum != 0:
-            weights = [weight/sum for weight in weights]
-        else:
-            weights = prior * len(possible_states)
-
+        weights = [weight / sum for weight in weights]
         return self.robot.random.choices(possible_states, weights)[0]
+
+    def apply_action(self, state, action):
+        effects = self.apply_arguments(self.effects_dict[action.name], self.parameters_dict[action.name], action.arguments)
+        state = state.difference({effect.flip() for effect in effects})
+        state = state.union(effects)
+        return state
+
+    def can_apply_action(self, state, action):
+        preconditions = self.apply_arguments(self.preconditions_dict[action.name], self.parameters_dict[action.name], action.arguments)
+        return state.issuperset(preconditions)
 
     def learn(self):
         with open(self.observation_file, "w") as file:
@@ -184,5 +222,4 @@ class Learner:
         solution = task.learn(suffix= str(self.robot.id))
 
         if solution.solution_found:
-            solution.explanations[-1].lifted_inferred_trajectory.to_file(self.trajectory_file)
             solution.learned_model.to_file(self.robot.model_file)

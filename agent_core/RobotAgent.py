@@ -178,6 +178,8 @@ class RobotAgent(Agent):
                 self.learner.add_state(None, Message.fromString(msg))
 
                 if state in {State.CW1, State.CI1}:
+                    self.learner.add_post_action(state)
+                    self.learner.add_state(None, None)
                     msg = None
             elif state == State.TR:
                 self.TR()
@@ -192,6 +194,8 @@ class RobotAgent(Agent):
                 self.CR()
                 self.learner.add_action(state)
                 self.learner.add_state(Message.Boolean, Message.fromString(msg) if msg is not None else None)
+                self.learner.add_post_action(state)
+                self.learner.add_state(None, Message.fromString(msg) if msg is not None else None)
             elif state == State.RWC1:
                 self.RWC1(msg)
                 self.learner.add_action(state)
@@ -214,6 +218,8 @@ class RobotAgent(Agent):
                 self.CIR()
                 self.learner.add_action(state)
                 self.learner.add_state(Message.Boolean, Message.fromString(msg) if msg is not None else None)
+                self.learner.add_post_action(state)
+                self.learner.add_state(None, Message.fromString(msg) if msg is not None else None)
             elif state == State.RIC1:
                 self.RIC1()
                 self.learner.add_action(state)
