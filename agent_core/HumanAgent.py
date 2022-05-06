@@ -32,6 +32,10 @@ class HumanAgent(Agent):
     def reset(self, seed= None, noise= None, interaction= None):
         super().reset(seed, noise, interaction)
         self.state = State.Start
+
+        while self.conn.poll():
+            self.conn.recv()
+
         self.barrier.reset()
 
     def connect(self, agent):

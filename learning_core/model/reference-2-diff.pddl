@@ -1,11 +1,3 @@
-(define (domain pfl)
-(:requirements :strips)
-(:types object message - object i - message s - message b - message iq - message sq - message variable - object oi1 - variable oi2 - variable oi - variable w1 - variable w2 - variable w - variable)
-(:predicates
-	(sent-to-human ?m1 - message)
-	(sent-to-robot ?m1 - message)
-	(set ?v1 - variable)
-)
 
 (:action goto-tir-pre
 	:parameters (?oi2 - oi2 ?w - w)

@@ -185,14 +185,14 @@ class Learner:
 
         for state in possible_states:
             if self.can_apply_action(self.inferred_state, self.actions[state]):
-                weights.append(8)
-                sum += 8
+                weights.append(16)
+                sum += 16
             elif state in self.pre_actions and self.can_apply_action(self.inferred_state, self.pre_actions[state]):
                 inferred_substate = self.apply_action(self.inferred_state, self.pre_actions[state])
 
                 if self.can_apply_action(inferred_substate, self.actions[state]):
-                    weights.append(8)
-                    sum += 8
+                    weights.append(16)
+                    sum += 16
                 else:
                     weights.append(1)
                     sum += 1

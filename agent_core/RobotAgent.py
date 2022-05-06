@@ -23,7 +23,6 @@ from multiprocessing import Value
 import os.path
 import json
 from shutil import copyfile
-import os
 
 class RobotAgent(Agent):
     KB= 15
@@ -54,6 +53,9 @@ class RobotAgent(Agent):
         self.initial_state = initial_state if self.interaction == State.SecondInteraction else self.interaction
         self.state.value = State.Start.value
 
+        while self.conn.poll():
+            self.conn.recv()
+
         if os.path.isfile(self.kb_file):
             with open(self.kb_file, "r") as file:
                 self.kb = json.load(file)
@@ -70,7 +72,15 @@ class RobotAgent(Agent):
         return self.conn.poll()
 
     def patch_model(self):
-        os.system("patch \"{}\" < \"{}/../learning_core/model/empty-2.pddl.patch\" > /dev/null".format(self.model_file, os.path.dirname(os.path.abspath(__file__))))
+        with open(self.model_file, "r+") as model, open("{}/../learning_core/model/empty-2-diff.pddl".format(os.path.dirname(os.path.abspath(__file__))), "r") as diff:
+            model_lines = model.readlines()
+            model_lines[-1] = ")\n"
+            diff_str = diff.read()
+            model_str = "".join(model_lines) + diff_str
+            model.seek(0)
+            model.truncate()
+            model.write(model_str)
+
         self.learner = Learner(self)
 
     def possible_states(self, msg):
