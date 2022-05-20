@@ -226,7 +226,10 @@ class Learner:
                     if state == AgentState.RRC2:
                         stack.append([AgentState.TR, AgentState.CR])
                     elif state in {AgentState.RWC2, AgentState.RIC2}:
-                        stack.append([AgentState.TW, AgentState.CW1, AgentState.CI1])
+                        if self.robot.interaction == AgentState.FirstInteraction:
+                            stack.append([AgentState.TW, AgentState.CW1])
+                        elif self.robot.interaction == AgentState.SecondInteraction:
+                            stack.append([AgentState.TW, AgentState.CW1, AgentState.CI1])
                     elif state == AgentState.RIRC2:
                         stack.append([AgentState.TIR, AgentState.CIR])
                     else:
