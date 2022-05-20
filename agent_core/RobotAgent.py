@@ -100,13 +100,7 @@ class RobotAgent(Agent):
                 return [State.CW1, State.CI1]
 
     def guess_next_state(self, states= None):
-        if states is None:
-            states = [State.TR, State.RRC1, State.RRC2, State.CR, State.TW, State.RWC1, State.RWC2, State.CW1, State.CW2]
-
-            if self.interaction == State.SecondInteraction:
-                states += [State.TIR, State.RIRC1, State.RIRC2, State.CIR, State.RIC1, State.RIC2, State.CI1, State.CI2]
-
-        if len(states) == 1:
+        if states is not None and len(states) == 1:
             return states[0]
         else:
             return self.learner.choose(states)

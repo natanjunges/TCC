@@ -179,29 +179,93 @@ class Learner:
         self.builder.add_action(deepcopy(self.post_actions[state]))
         self.inferred_state = self.apply_action(self.inferred_state, self.post_actions[state])
 
-    def choose(self, possible_states):
+    def choose(self, possible_states= None):
+        a = 2
+        g = 2
+        next_states = [AgentState.TR, AgentState.RRC1, AgentState.RRC2, AgentState.CR, AgentState.TW, AgentState.RWC1, AgentState.RWC2, AgentState.CW1, AgentState.CW2]
+
+        if self.robot.interaction == AgentState.SecondInteraction:
+            next_states += [AgentState.TIR, AgentState.RIRC1, AgentState.RIRC2, AgentState.CIR, AgentState.RIC1, AgentState.RIC2, AgentState.CI1, AgentState.CI2]
+
+        if possible_states is None:
+            possible_states = next_states
+
+        states = deepcopy(possible_states)
         weights = []
         sum = 0
+        i = 0
 
-        for state in possible_states:
-            if self.can_apply_action(self.inferred_state, self.actions[state]):
-                weights.append(16)
-                sum += 16
-            elif state in self.pre_actions and self.can_apply_action(self.inferred_state, self.pre_actions[state]):
-                inferred_substate = self.apply_action(self.inferred_state, self.pre_actions[state])
+        while i < len(states):
+            stack = [[states[i]]]
+            subweights = [[0, 0]]
+            state_trajectory = [self.inferred_state]
 
-                if self.can_apply_action(inferred_substate, self.actions[state]):
-                    weights.append(16)
-                    sum += 16
+            while len(stack) > 0:
+                state = stack[-1].pop()
+                cba = self.can_apply_action(state_trajectory[-1], self.actions[state])
+
+                if not cba and state in self.pre_actions and self.can_apply_action(state_trajectory[-1], self.pre_actions[state]):
+                    inferred_substate = self.apply_action(state_trajectory[-1], self.pre_actions[state])
+                    cba = self.can_apply_action(inferred_substate, self.actions[state])
+                    inferred_substate = self.apply_action(inferred_substate, self.actions[state])
                 else:
-                    weights.append(1)
-                    sum += 1
+                    inferred_substate = self.apply_action(state_trajectory[-1], self.actions[state])
+
+                if state in self.post_actions and self.can_apply_action(inferred_substate, self.post_actions[state]):
+                    inferred_substate = self.apply_action(inferred_substate, self.post_actions[state])
+
+                if inferred_substate in state_trajectory:
+                    pass
+                elif state in {AgentState.CW2, AgentState.CI2}:
+                    subweights[-1][0] += (a if cba else 1) * g
+                    subweights[-1][1] += 1
+                elif not cba:
+                    subweights[-1][0] += 1
+                    subweights[-1][1] += 1
+                else:
+                    if state == AgentState.RRC2:
+                        stack.append([AgentState.TR, AgentState.CR])
+                    elif state in {AgentState.RWC2, AgentState.RIC2}:
+                        stack.append([AgentState.TW, AgentState.CW1, AgentState.CI1])
+                    elif state == AgentState.RIRC2:
+                        stack.append([AgentState.TIR, AgentState.CIR])
+                    else:
+                        stack.append(deepcopy(next_states))
+
+                    subweights.append([0, 0])
+                    state_trajectory.append(inferred_substate)
+                    continue
+
+                while len(stack) > 0 and len(stack[-1]) == 0:
+                    stack.pop()
+                    subweight = subweights.pop()
+
+                    if subweight[1] > 0:
+                        avg = subweight[0] / subweight[1] * a
+
+                        if len(subweights) > 0:
+                            subweights[-1][0] += avg
+                            subweights[-1][1] += 1
+                        else:
+                            subweights.append(avg)
+
+                    state_trajectory.pop()
+
+            if len(subweights) > 0:
+                weights.append(subweights[0])
+                sum += subweights[0]
+                i += 1
             else:
-                weights.append(1)
+                states.pop(i)
+
+        for i in range(len(possible_states)):
+            if i >= len(states) or states[i] != possible_states[i]:
+                states.insert(i, possible_states[i])
+                weights.insert(i, 1)
                 sum += 1
 
         weights = [weight / sum for weight in weights]
-        return self.robot.random.choices(possible_states, weights)[0]
+        return self.robot.random.choices(states, weights)[0]
 
     def apply_action(self, state, action):
         effects = self.apply_arguments(self.effects_dict[action.name], self.parameters_dict[action.name], action.arguments)
