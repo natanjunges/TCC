@@ -14,31 +14,31 @@
 # You should have received a copy of the GNU General Public License
 # along with TCC.  If not, see <https://www.gnu.org/licenses/>.
 
-def insert(list, item):
+def insert(list_, item):
     i = 0
-    l = len(list)
+    L = len(list_)
     li = None
 
-    while i < l:
-        li = list[i]
+    while i < L:
+        li = list_[i]
 
         if li < item:
             i += 1
         else:
             break
 
-    if i == l or li != item:
-        list.insert(i, item)
+    if i == L or li != item:
+        list_.insert(i, item)
         return True
     else:
         return False
 
 def merge(list1, list2):
     i = 0
-    l = len(list2)
+    L = len(list2)
     j = 0
 
-    while i < l:
+    while i < L:
         li = None
         item = list2[i]
 
@@ -61,10 +61,10 @@ def merge(list1, list2):
 
 def sub(list1, list2):
     i = 0
-    l = len(list2)
+    L = len(list2)
     j = 0
 
-    while i < l:
+    while i < L:
         li = None
         item = list2[i]
 

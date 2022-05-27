@@ -14,19 +14,20 @@
 # You should have received a copy of the GNU General Public License
 # along with TCC.  If not, see <https://www.gnu.org/licenses/>.
 
-from .State import State
 from multiprocessing import Process
 import logging
 import sys
 import random
 
+from .State import State
+
 class Agent:
-    NONE= 30
-    SIMULATION= 25
-    SENT_MESSAGES= 20
-    RECEIVED_MESSAGES= 18
-    STATES= 12
-    SYNCHRONIZATION= 10
+    NONE = 30
+    SIMULATION = 25
+    SENT_MESSAGES = 20
+    RECEIVED_MESSAGES = 18
+    STATES = 12
+    SYNCHRONIZATION = 10
 
     def __init__(self, id, path_prefix, seed, noise, interaction):
         self.id = id
@@ -35,9 +36,10 @@ class Agent:
         self.noise = noise
         self.interaction = interaction
         self.random = random.Random(self.seed)
-        self.process = Process(target= self.run)
+        self.process = Process(target=self.run)
         self.state = State.Start
-        self.logger = logging.getLogger("{}.{}".format(self.__class__.__name__, self.id))
+        self.logger = logging.getLogger("{}.{}".format(self.__class__.__name__,
+                                                       self.id))
         self.logger.addHandler(logging.StreamHandler(sys.stdout))
         self.logger.setLevel(self.SENT_MESSAGES)
 
@@ -47,7 +49,7 @@ class Agent:
     def join(self):
         self.process.join()
 
-    def reset(self, seed= None, noise= None, interaction= None):
+    def reset(self, seed=None, noise=None, interaction=None):
         if seed is not None:
             self.seed = seed
 
@@ -58,10 +60,11 @@ class Agent:
             self.interaction = interaction
 
         self.random = random.Random(self.seed)
-        self.process = Process(target= self.run)
+        self.process = Process(target=self.run)
 
     def log(self, level, msg):
-        self.logger.log(level, "{}#{} {}".format(self.__class__.__name__, self.id, msg))
+        self.logger.log(level, "{}#{} {}".format(self.__class__.__name__,
+                                                 self.id, msg))
 
     def send(self, msg):
         self.conn.send(msg)

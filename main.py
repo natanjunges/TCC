@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-# TCC - Software part of my undergraduate thesis in Computer Engineering at the Federal University of Technology – Parana (UTFPR), Brazil.
+# TCC - Software part of my undergraduate thesis in Computer Engineering
+# at the Federal University of Technology – Parana (UTFPR), Brazil.
 # Copyright (C) 2022  Natan Junges <natanjunges@alunos.utfpr.edu.br>
 #
 # TCC is free software: you can redistribute it and/or modify
@@ -16,9 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with TCC.  If not, see <https://www.gnu.org/licenses/>.
 
-from agent_core.RobotAgent import RobotAgent
-from agent_core.HumanAgent import HumanAgent
-from agent_core.State import State
 import random
 import sys
 import json
@@ -26,20 +24,39 @@ from time import time
 from argparse import ArgumentParser
 import os
 
+from agent_core.RobotAgent import RobotAgent
+from agent_core.HumanAgent import HumanAgent
+from agent_core.State import State
+
 if __name__ == "__main__":
-    parser = ArgumentParser(description= "TCC - Software part of my undergraduate thesis in Computer Engineering at the Federal University of Technology – Parana (UTFPR), Brazil.")
-    parser.add_argument("--robot-ids", "-I", type= int, metavar= "ID", nargs="+", required= True)
-    parser.add_argument("--path-prefix", "-p", type= os.path.abspath, metavar= "PREFIX", default= "./data")
-    parser.add_argument("--seed", "-s", type= float, default= time())
-    parser.add_argument("--noise", "-n", type= float, default= 0.1)
-    parser.add_argument("--interaction", "-i", type= State.__getitem__, choices= [State.FirstInteraction, State.SecondInteraction], metavar= "{FirstInteraction, SecondInteraction}", required= True)
-    parser.add_argument("--initial-state", "-S", type= State.__getitem__, choices= [State.TR, State.TIR], metavar= "{TR, TIR}")
-    parser.add_argument("--patch-model", "-m", action= "store_true")
-    parser.add_argument("--evaluate-only", "-e", action= "store_true")
-    parser.add_argument("--rounds", "-r", type= int, required= True)
+    parser = ArgumentParser(description="TCC - Software part of my "
+                            "undergraduate thesis in Computer Engineering at "
+                            "the Federal University of Technology – Parana "
+                            "(UTFPR), Brazil.")
+    parser.add_argument("--robot-ids", "-I", type=int, metavar="ID", nargs="+",
+                        required=True)
+    parser.add_argument("--path-prefix", "-p", type=os.path.abspath,
+                        metavar="PREFIX", default="./data")
+    parser.add_argument("--seed", "-s", type=float, default=time())
+    parser.add_argument("--noise", "-n", type=float, default=0.1)
+    parser.add_argument("--interaction", "-i", type=State.__getitem__,
+                        choices=[State.FirstInteraction,
+                                 State.SecondInteraction],
+                        metavar="{FirstInteraction, SecondInteraction}",
+                        required=True)
+    parser.add_argument("--initial-state", "-S", type=State.__getitem__,
+                        choices=[State.TR, State.TIR], metavar="{TR, TIR}")
+    parser.add_argument("--patch-model", "-m", action="store_true")
+    parser.add_argument("--evaluate-only", "-e", action="store_true")
+    parser.add_argument("--rounds", "-r", type=int, required=True)
     args = parser.parse_args()
-    args.patch_model = args.interaction == State.SecondInteraction and args.patch_model
-    run = "-I {} -p \"{}\" -s {} -n {} -i {}".format(" ".join([str(id) for id in args.robot_ids]), args.path_prefix, args.seed, args.noise, "FirstInteraction" if args.interaction == State.FirstInteraction else "SecondInteraction")
+    args.patch_model = (args.interaction == State.SecondInteraction
+                        and args.patch_model)
+    run = "-I {} -p \"{}\" -s {} -n {} -i {}".format(
+        " ".join([str(id) for id in args.robot_ids]),
+        args.path_prefix, args.seed, args.noise,
+        "FirstInteraction" if args.interaction == State.FirstInteraction
+        else "SecondInteraction")
 
     if args.initial_state is not None:
         run += " -S " + ("TR" if args.initial_state == State.TR else "TIR")
@@ -67,12 +84,15 @@ if __name__ == "__main__":
             os.mkdir("{}/{}/".format(args.path_prefix, id))
 
         seed = seed_generator.randrange(sys.maxsize)
-        robots[id] = RobotAgent(id, args.path_prefix, seed, args.noise, args.interaction, len(objects), args.initial_state, args.evaluate_only)
+        robots[id] = RobotAgent(id, args.path_prefix, seed, args.noise,
+                                args.interaction, len(objects),
+                                args.initial_state, args.evaluate_only)
 
         if args.patch_model:
             robots[id].patch_model()
 
-        humans[id] = HumanAgent(id, args.path_prefix, seed, args.noise, args.interaction, objects, args.evaluate_only)
+        humans[id] = HumanAgent(id, args.path_prefix, seed, args.noise,
+                                args.interaction, objects, args.evaluate_only)
         humans[id].connect(robots[id])
 
     for i in range(args.rounds):
