@@ -225,8 +225,6 @@ class Learner:
                                                 self.post_actions[state])
 
     def choose(self, possible_states=None):
-        a = 2
-        g = 2
         next_states = [AgentState.TR, AgentState.RRC1, AgentState.RRC2,
                        AgentState.CR, AgentState.TW, AgentState.RWC1,
                        AgentState.RWC2, AgentState.CW1, AgentState.CW2]
@@ -240,6 +238,13 @@ class Learner:
             possible_states = next_states
 
         states = deepcopy(possible_states)
+        greedy_a = 16
+        ld_dfs_a = 2
+        ld_dfs_g = 2
+        # LD-DFS/greedy
+        greedy = False
+        a = greedy_a if greedy else ld_dfs_a
+        g = 1 if greedy else ld_dfs_g
         weights = []
         sum = 0
         i = 0
@@ -279,6 +284,9 @@ class Learner:
                     subweights[-1][1] += 1
                 elif not cba:
                     subweights[-1][0] += 1
+                    subweights[-1][1] += 1
+                elif greedy:
+                    subweights[-1][0] += (a if cba else 1)
                     subweights[-1][1] += 1
                 else:
                     if state == AgentState.RRC2:
