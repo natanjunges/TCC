@@ -32,9 +32,12 @@ class ObservationBuilder:
 
     def add_state(self, state):
         state.next_action = None
-        self.observation.all_actions_observed = self.observation.all_actions_observed and self.observation.states[-1].next_action is not None
+        self.observation.all_actions_observed = (
+            self.observation.all_actions_observed
+            and self.observation.states[-1].next_action is not None)
         self.observation.states.append(state)
-        self.observation.bounded = self.observation.all_states_observed or self.observation.all_actions_observed
+        self.observation.bounded = (self.observation.all_states_observed
+                                    or self.observation.all_actions_observed)
         self.observation.length += 1
         self.observation.number_of_states += 1
 

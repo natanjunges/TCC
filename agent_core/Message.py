@@ -24,18 +24,18 @@ class Message(Enum):
     StringQuestion = auto()
 
     @classmethod
-    def fromString(cls, str):
-        if str == "True":
+    def fromString(cls, str_):
+        if str_ == "True":
             return cls.Boolean
-        elif str[-1] == "?":
+        elif str_[-1] == "?":
             try:
-                int(str[:-1])
+                int(str_[:-1])
                 return cls.IntegerQuestion
             except:
                 return cls.StringQuestion
         else:
             try:
-                int(str)
+                int(str_)
                 return cls.Integer
             except:
                 return cls.String

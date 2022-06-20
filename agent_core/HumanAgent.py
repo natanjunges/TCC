@@ -14,22 +14,24 @@
 # You should have received a copy of the GNU General Public License
 # along with TCC.  If not, see <https://www.gnu.org/licenses/>.
 
-from .Agent import Agent
-from .State import State
-from .utils import insert, merge, sub
 from multiprocessing import Pipe, Barrier
 import json
 import os.path
 from datetime import datetime
 
+from .Agent import Agent
+from .State import State
+from .utils import insert, merge, sub
+
 class HumanAgent(Agent):
-    def __init__(self, id, path_prefix, seed, noise, interaction, objects, evaluate_only= False):
+    def __init__(self, id, path_prefix, seed, noise, interaction, objects,
+                 evaluate_only=False):
         super().__init__(id, path_prefix, seed, noise, interaction)
         self.objects = objects
         self.evaluate_only = evaluate_only
         self.log_file = "{}/{}/log.json".format(self.path_prefix, self.id)
 
-    def reset(self, seed= None, noise= None, interaction= None):
+    def reset(self, seed=None, noise=None, interaction=None):
         super().reset(seed, noise, interaction)
         self.state = State.Start
 
@@ -146,33 +148,55 @@ class HumanAgent(Agent):
         # CI1, CI2
 
         if next_state == State.TR:
-            return state in {State.Start, State.RRC1, State.RRC2, State.TW, State.CW1, State.RIRC1, State.CIR, State.CI1}
+            return state in {State.Start, State.RRC1, State.RRC2, State.TW,
+                             State.CW1, State.RIRC1, State.CIR, State.CI1}
         elif next_state in {State.RRC1, State.RIRC1}:
             return state in {State.TR, State.TIR}
         elif next_state in {State.RRC2, State.RIRC2}:
-            return state in {State.RRC1, State.RIRC1} and self.object_index_1 is not None
+            return (state in {State.RRC1, State.RIRC1} and self.object_index_1
+                    is not None)
         elif next_state == State.CR:
-            return state in {State.RRC2, State.TW, State.CW1, State.CIR, State.CI1} and self.object_index_1 is not None and self.object_index_2 is not None and self.object_index_1 == self.object_index_2
+            return (state in {State.RRC2, State.TW, State.CW1, State.CIR,
+                              State.CI1}
+                    and self.object_index_1 is not None and self.object_index_2
+                    is not None and self.object_index_1 == self.object_index_2)
         elif next_state == State.TW:
-            return state in {State.RRC1, State.CR, State.TW, State.RWC1, State.RWC2, State.CW1, State.RIRC1, State.CIR, State.RIC1, State.RIC2, State.CI1} and self.object_index is not None
+            return (state in {State.RRC1, State.CR, State.TW, State.RWC1,
+                              State.RWC2, State.CW1, State.RIRC1, State.CIR,
+                              State.RIC1, State.RIC2, State.CI1}
+                    and self.object_index is not None)
         elif next_state == State.RWC1:
             return state == State.TW
         elif next_state == State.RWC2:
             return state == State.RWC1 and self.word_1 is not None
         elif next_state == State.CW1:
-            return state in {State.RWC1, State.RWC2, State.CW1, State.CIR, State.CI1} and self.word_1 is not None and self.word_2 is not None and self.word_1 == self.word_2
+            return (state in {State.RWC1, State.RWC2, State.CW1, State.CIR,
+                              State.CI1}
+                    and self.word_1 is not None and self.word_2 is not None
+                    and self.word_1 == self.word_2)
         elif next_state in {State.CW2, State.CI2}:
-            return state in {State.TW, State.CW1, State.CIR, State.CI1} and self.object_index_1 is not None and self.word is not None
+            return (state in {State.TW, State.CW1, State.CIR, State.CI1}
+                    and self.object_index_1 is not None and self.word
+                    is not None)
         elif next_state == State.TIR:
-            return state in {State.Start, State.RRC1, State.TW, State.CW1, State.RIRC1, State.RIRC2, State.CIR, State.CI1}
+            return state in {State.Start, State.RRC1, State.TW, State.CW1,
+                             State.RIRC1, State.RIRC2, State.CIR, State.CI1}
         elif next_state == State.CIR:
-            return state in {State.TW, State.CW1, State.RIRC2, State.CIR, State.CI1} and self.object_index_1 is not None and self.object_index_2 is not None and self.object_index_1 == self.object_index_2
+            return (state in {State.TW, State.CW1, State.RIRC2, State.CIR,
+                              State.CI1}
+                    and self.object_index_1 is not None and self.object_index_2
+                    is not None and self.object_index_1 == self.object_index_2)
         elif next_state == State.RIC1:
-            return state in {State.RRC1, State.TW, State.CW1, State.RIRC1, State.CIR, State.CI1}
+            return state in {State.RRC1, State.TW, State.CW1, State.RIRC1,
+                             State.CIR, State.CI1}
         elif next_state == State.RIC2:
             return state == State.RIC1 and self.object_index is not None
         elif next_state == State.CI1:
-            return state in {State.CW1, State.CIR, State.RIC1, State.RIC2, State.CI1} and self.object_index is not None and self.word_2 is not None and self.word_2 in self.objects[self.object_index]
+            return (state in {State.CW1, State.CIR, State.RIC1, State.RIC2,
+                              State.CI1}
+                    and self.object_index is not None and self.word_2
+                    is not None and self.word_2
+                    in self.objects[self.object_index])
 
     def run_state(self):
         if self.state == State.RRC1:
@@ -226,7 +250,7 @@ class HumanAgent(Agent):
             elif state == State.CI2:
                 state = State.CW2
 
-        return 0.02 * state.value + 0.8
+        return 0.02*state.value + 0.8
 
     def d(self):
         if self.evaluate_only:
@@ -240,19 +264,31 @@ class HumanAgent(Agent):
                 for line in file:
                     interaction = json.loads(line)
 
-                    if interaction["interaction"] == ("FirstInteraction" if self.interaction == State.FirstInteraction else "SecondInteraction"):
-                        merge(transitions, [[State[transition[0]], State[transition[1]]] for transition in interaction["new_transitions"]])
+                    if interaction["interaction"] == (
+                            "FirstInteraction" if self.interaction
+                            == State.FirstInteraction
+                            else "SecondInteraction"):
+                        merge(transitions, [[State[transition[0]],
+                                             State[transition[1]]]
+                                            for transition
+                                            in interaction["new_transitions"]])
 
-                        if len(transitions) >= (22 if self.interaction == State.FirstInteraction else 70):
+                        if len(transitions) >= (22 if self.interaction
+                                                == State.FirstInteraction
+                                                else 70):
                             break
 
         sub(new_transitions, transitions)
-        return (new_transitions, (0.0072 if self.interaction == State.FirstInteraction else 0.0022) * (len(transitions) + len(new_transitions)) + 0.84)
+        return (new_transitions, (0.0072 if self.interaction
+                                  == State.FirstInteraction else 0.0022)
+                *(len(transitions)+len(new_transitions)) + 0.84)
 
     def update_transitions(self, state, condition, legal):
         self.state_transitions += 1
 
-        if self.state_transitions > (28 if self.interaction == State.FirstInteraction else 20) and condition:
+        if (self.state_transitions > (28 if self.interaction
+                                      == State.FirstInteraction else 20)
+                 and condition):
             self.kill_robot(state, legal, False)
             return False
         else:
@@ -261,7 +297,9 @@ class HumanAgent(Agent):
     def kill_robot(self, state, legal, limit):
         self.abort()
         d = self.d()
-        score = self.a(state) * (1 if legal else 0.84) * (1 if limit else 0.84) * d[1]
+        score = (self.a(state) * (1 if legal else 0.84) * (1 if limit
+                                                           else 0.84)
+                 * d[1])
         self.save_log(state, legal, d[0], score)
 
     def save_log(self, state, legal, transitions, score):
@@ -269,12 +307,15 @@ class HumanAgent(Agent):
             "timestamp": datetime.utcnow().isoformat(" "),
             "seed": self.seed,
             "noise": self.noise,
-            "interaction": "FirstInteraction" if self.interaction == State.FirstInteraction else "SecondInteraction",
+            "interaction": "FirstInteraction" if self.interaction
+                           == State.FirstInteraction else "SecondInteraction",
             "initial_state": str(self.initial_state),
             "last_state": str(state),
             "legal_transition": legal,
             "n_transitions": self.state_transitions,
-            "new_transitions": [[str(transition[0]), str(transition[1])] for transition in transitions] if not self.evaluate_only else [],
+            "new_transitions": [[str(transition[0]), str(transition[1])]
+                                for transition in transitions] if
+                               not self.evaluate_only else [],
             "score": score
         }
 
@@ -284,8 +325,10 @@ class HumanAgent(Agent):
         if self.logger.isEnabledFor(self.SIMULATION):
             self.log(self.SIMULATION, "last state: {}".format(state))
             self.log(self.SIMULATION, "legal transition: {}".format(legal))
-            self.log(self.SIMULATION, "number of transitions: {}".format(self.state_transitions))
-            self.log(self.SIMULATION, "new transitions: {}".format(transitions))
+            self.log(self.SIMULATION, "number of transitions: {}".format(
+                self.state_transitions))
+            self.log(self.SIMULATION, "new transitions: {}".format(
+                transitions))
             self.log(self.SIMULATION, "score: {}".format(score))
 
     def get_transitions(self):
@@ -320,7 +363,8 @@ class HumanAgent(Agent):
                 if cbn:
                     self.state = state
                     self.states.append(state)
-                    self.log(self.STATES, "synced state: {}".format(self.state))
+                    self.log(self.STATES, "synced state: {}".format(
+                        self.state))
                 else:
                     self.kill_robot(state, False, True)
                     return None
@@ -348,13 +392,16 @@ class HumanAgent(Agent):
             prev_state = state
             state = State(self.robot_state.value)
 
-            if not self.update_transitions(state, self.state not in {State.CW2, State.CI2}, self.can_be_next(self.state, state)):
+            if not self.update_transitions(
+                    state, self.state not in {State.CW2, State.CI2},
+                    self.can_be_next(self.state, state)):
                 if self.logger.isEnabledFor(self.STATES):
                     self.log(self.STATES, "states: {}".format(self.states))
 
                 break
 
-            if self.state in {State.TR, State.CR, State.RWC1, State.CW2, State.TIR, State.RIC1, State.CI2}:
+            if self.state in {State.TR, State.CR, State.RWC1, State.CW2,
+                              State.TIR, State.RIC1, State.CI2}:
                 if self.state == State.TR:
                     self.object_index_2 = None
                     self.word = None
@@ -404,7 +451,9 @@ class HumanAgent(Agent):
                     if self.initial_state is None:
                         self.initial_state = self.state
 
-                    if self.state in {State.RRC1, State.TW, State.RWC2, State.CW1, State.RIRC1, State.RIC2, State.CI1}:
+                    if self.state in {State.RRC1, State.TW, State.RWC2,
+                                      State.CW1, State.RIRC1, State.RIC2,
+                                      State.CI1}:
                         self.run_state()
                         prev_state = self.sync_state(prev_state)
 
@@ -412,7 +461,8 @@ class HumanAgent(Agent):
                             state = self.state
                         else:
                             if self.logger.isEnabledFor(self.STATES):
-                                self.log(self.STATES, "states: {}".format(self.states))
+                                self.log(self.STATES, "states: {}".format(
+                                    self.states))
 
                             break
                     else:
@@ -439,8 +489,15 @@ class HumanAgent(Agent):
         self.word_1 = None
         self.word_2 = None
 
-        if self.noise >= 1 or self.noise > 0 and self.random.random() < self.noise:
-            self.object_index = self.random.choice([self.object_index - 1 if self.object_index > 0 else self.object_index, self.object_index + 1 if self.object_index < len(self.objects) - 1 else self.object_index])
+        if (self.noise >= 1 or self.noise > 0 and self.random.random()
+                < self.noise):
+            self.object_index = self.random.choice([self.object_index - 1
+                                                    if self.object_index > 0
+                                                    else self.object_index,
+                                                    self.object_index + 1
+                                                    if self.object_index
+                                                    < len(self.objects) - 1
+                                                    else self.object_index])
 
         self.send("{}?".format(self.object_index))
 
@@ -472,8 +529,15 @@ class HumanAgent(Agent):
         self.word_1 = None
         self.word_2 = None
 
-        if self.noise >= 1 or self.noise > 0 and self.random.random() < self.noise:
-            self.object_index = self.random.choice([self.object_index - 1 if self.object_index > 0 else self.object_index, self.object_index + 1 if self.object_index < len(self.objects) - 1 else self.object_index])
+        if (self.noise >= 1 or self.noise > 0 and self.random.random()
+                < self.noise):
+            self.object_index = self.random.choice([self.object_index - 1
+                                                    if self.object_index > 0
+                                                    else self.object_index,
+                                                    self.object_index + 1
+                                                    if self.object_index
+                                                    < len(self.objects) - 1
+                                                    else self.object_index])
 
         self.send("{}?".format(self.object_index))
 
