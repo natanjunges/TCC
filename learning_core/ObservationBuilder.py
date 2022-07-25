@@ -17,11 +17,10 @@
 # Additional permission under GNU GPL version 3 section 7
 #
 # If you modify TCC, or any covered work, by linking or combining it with
-# meta-planning, numpy or Madagascar (or modified versions of those
-# libraries/programs), containing parts covered by the terms of
-# meta-planning's (detailed in README.md), numpy's (BSD 3-Clause License)
-# or Madagascar's (detailed in README.md) licenses, the licensors of TCC
-# grant you additional permission to convey the resulting work.
+# meta-planning or Madagascar (or modified versions of those libraries/
+# programs), containing parts covered by the terms of meta-planning's (detailed
+# in README.md) or Madagascar's (detailed in README.md) licenses, the licensors
+# of TCC grant you additional permission to convey the resulting work.
 
 from meta_planning.observations import State, Observation
 
