@@ -38,11 +38,9 @@ along with TCC.  If not, see &lt;https://www.gnu.org/licenses/&gt;.
 Additional permission under GNU GPL version 3 section 7
 
 If you modify TCC, or any covered work, by linking or combining it with
-meta-planning, numpy or Madagascar (or modified versions of those
+meta-planning or Madagascar (or modified versions of those
 libraries/programs), containing parts covered by the terms of meta-planning's
-([detailed below](#meta-plannings-license)), numpy's
-([BSD 3-Clause License](https://github.com/numpy/numpy/blob/main/LICENSE.txt))
-or Madagascar's ([detailed below](#madagascars-license)) licenses, the
+([detailed below](#meta-plannings-license)) or Madagascar's ([detailed below](#madagascars-license)) licenses, the
 licensors of TCC grant you additional permission to convey the resulting work.
 
 ### meta-planning's license
