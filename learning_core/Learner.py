@@ -285,7 +285,7 @@ class Learner:
                     subweights[-1][0] += 1
                     subweights[-1][1] += 1
                 elif greedy:
-                    subweights[-1][0] += (a if cba else 1)
+                    subweights[-1][0] += a
                     subweights[-1][1] += 1
                 else:
                     if state == AgentState.RRC2:
